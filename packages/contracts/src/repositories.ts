@@ -17,6 +17,18 @@ export interface StatsRepository {
   upsertSeason(record: SeasonStatisticRecord): Promise<void>;
 }
 
+/** Query boundary for already-normalized historical data and persisted aggregates. */
+export interface HistoricalStatisticsRepository {
+  listPlayerWeeks(
+    input: HistoricalPlayerStatisticsQuery
+  ): Promise<HistoricalWeeklyStatisticRecord[]>;
+  listPlayerSeasons(
+    input: HistoricalPlayerStatisticsQuery
+  ): Promise<HistoricalSeasonStatisticRecord[]>;
+  listTeamWeeks(input: HistoricalTeamStatisticsQuery): Promise<HistoricalWeeklyStatisticRecord[]>;
+  listTeamSeasons(input: HistoricalTeamStatisticsQuery): Promise<HistoricalSeasonStatisticRecord[]>;
+}
+
 export interface ProjectionRepository {
   listForSeason(input: VisibleSeasonQuery): Promise<ProjectionRecord[]>;
 }
@@ -95,6 +107,26 @@ export interface VisibleSeasonQuery {
 
 export interface VisiblePlayerQuery extends VisibleSeasonQuery {
   readonly playerId: string;
+}
+
+export interface HistoricalPlayerStatisticsQuery extends VisiblePlayerQuery {
+  readonly datasetVersionId: string;
+}
+
+export interface HistoricalTeamStatisticsQuery extends VisibleSeasonQuery {
+  readonly teamId: string;
+  readonly datasetVersionId: string;
+}
+
+export interface HistoricalWeeklyStatisticRecord {
+  readonly teamId: string;
+  readonly week: number;
+  readonly values: Readonly<Record<string, number>>;
+}
+
+export interface HistoricalSeasonStatisticRecord {
+  readonly teamId: string;
+  readonly values: Readonly<Record<string, number>>;
 }
 
 export interface ProjectionRecord {

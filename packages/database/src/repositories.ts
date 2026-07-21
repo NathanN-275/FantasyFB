@@ -3,6 +3,7 @@ import type {
   AuthorizationContext,
   DraftEventRecord,
   DraftRepository,
+  HistoricalStatisticsRepository,
   ImportRepository,
   LeagueRepository,
   NewsRepository,
@@ -32,6 +33,8 @@ import {
   projectionRuns,
   rankingRuns,
   seasonStatistics,
+  teamSeasonStatistics,
+  teamWeeklyStatistics,
   tradeEvaluations,
   weeklyStatistics
 } from "./schema.js";
@@ -76,6 +79,7 @@ async function assertOwnedDraft(
 export function createRepositories(database: Database): {
   playerRepository: PlayerRepository;
   statsRepository: StatsRepository;
+  historicalStatisticsRepository: HistoricalStatisticsRepository;
   projectionRepository: ProjectionRepository;
   rankingRepository: RankingRepository;
   leagueRepository: LeagueRepository;
@@ -188,6 +192,95 @@ export function createRepositories(database: Database): {
           ],
           set: { values: record.values }
         });
+    }
+  };
+
+  const historicalStatisticsRepository: HistoricalStatisticsRepository = {
+    async listPlayerWeeks(input) {
+      const visibility = visibleDatasetCondition(input, datasetVersions);
+      const records = await database
+        .select({
+          teamId: weeklyStatistics.teamId,
+          week: weeklyStatistics.week,
+          values: weeklyStatistics.values
+        })
+        .from(weeklyStatistics)
+        .innerJoin(datasetVersions, eq(weeklyStatistics.datasetVersionId, datasetVersions.id))
+        .where(
+          and(
+            eq(weeklyStatistics.playerId, input.playerId),
+            eq(weeklyStatistics.seasonId, input.seasonId),
+            eq(weeklyStatistics.datasetVersionId, input.datasetVersionId),
+            visibility
+          )
+        )
+        .orderBy(asc(weeklyStatistics.week));
+      return records.map((record) => ({
+        ...record,
+        values: numericStatisticValues(record.values)
+      }));
+    },
+    async listPlayerSeasons(input) {
+      const visibility = visibleDatasetCondition(input, datasetVersions);
+      const records = await database
+        .select({ teamId: seasonStatistics.teamId, values: seasonStatistics.values })
+        .from(seasonStatistics)
+        .innerJoin(datasetVersions, eq(seasonStatistics.datasetVersionId, datasetVersions.id))
+        .where(
+          and(
+            eq(seasonStatistics.playerId, input.playerId),
+            eq(seasonStatistics.seasonId, input.seasonId),
+            eq(seasonStatistics.datasetVersionId, input.datasetVersionId),
+            visibility
+          )
+        );
+      return records.map((record) => ({
+        ...record,
+        values: numericStatisticValues(record.values)
+      }));
+    },
+    async listTeamWeeks(input) {
+      const visibility = visibleDatasetCondition(input, datasetVersions);
+      const records = await database
+        .select({
+          teamId: teamWeeklyStatistics.teamId,
+          week: teamWeeklyStatistics.week,
+          values: teamWeeklyStatistics.values
+        })
+        .from(teamWeeklyStatistics)
+        .innerJoin(datasetVersions, eq(teamWeeklyStatistics.datasetVersionId, datasetVersions.id))
+        .where(
+          and(
+            eq(teamWeeklyStatistics.teamId, input.teamId),
+            eq(teamWeeklyStatistics.seasonId, input.seasonId),
+            eq(teamWeeklyStatistics.datasetVersionId, input.datasetVersionId),
+            visibility
+          )
+        )
+        .orderBy(asc(teamWeeklyStatistics.week));
+      return records.map((record) => ({
+        ...record,
+        values: numericStatisticValues(record.values)
+      }));
+    },
+    async listTeamSeasons(input) {
+      const visibility = visibleDatasetCondition(input, datasetVersions);
+      const records = await database
+        .select({ teamId: teamSeasonStatistics.teamId, values: teamSeasonStatistics.values })
+        .from(teamSeasonStatistics)
+        .innerJoin(datasetVersions, eq(teamSeasonStatistics.datasetVersionId, datasetVersions.id))
+        .where(
+          and(
+            eq(teamSeasonStatistics.teamId, input.teamId),
+            eq(teamSeasonStatistics.seasonId, input.seasonId),
+            eq(teamSeasonStatistics.datasetVersionId, input.datasetVersionId),
+            visibility
+          )
+        );
+      return records.map((record) => ({
+        ...record,
+        values: numericStatisticValues(record.values)
+      }));
     }
   };
 
@@ -353,6 +446,7 @@ export function createRepositories(database: Database): {
   return {
     playerRepository,
     statsRepository,
+    historicalStatisticsRepository,
     projectionRepository,
     rankingRepository,
     leagueRepository,
@@ -361,6 +455,20 @@ export function createRepositories(database: Database): {
     newsRepository,
     importRepository
   };
+}
+
+function numericStatisticValues(values: unknown): Record<string, number> {
+  if (!values || typeof values !== "object" || Array.isArray(values)) {
+    throw new Error("Historical statistic values must be a JSON object.");
+  }
+  const normalized: Record<string, number> = {};
+  for (const [field, value] of Object.entries(values)) {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new Error(`Historical statistic ${field} must be a finite number.`);
+    }
+    normalized[field] = value;
+  }
+  return normalized;
 }
 
 export type DatabasePlayer = InferSelectModel<typeof players>;

@@ -18,8 +18,9 @@ The `pnpm boundaries` command rejects imports into another workspace's `src` or 
 
 `HistoricalDataProvider` is implemented by `NflverseHistoricalDataProvider`. It uses
 `nflreadpy` for the reviewed nflverse weekly player-statistics dataset, normalizes
-records behind provider contracts, stores provenance and health, and preserves the
-last valid dataset on failure. See the source review in
+records behind provider contracts, stores player/team weekly and season aggregates,
+and preserves the last valid dataset on failure. `@fantasyfb/historical-data` is the
+single application-facing module for retrieving those persisted aggregates. See the source review in
 [`docs/data-sources/nflverse-historical-player-stats.md`](../data-sources/nflverse-historical-player-stats.md).
 
 Prompt 8 will implement `AdpProvider` with `FantasyFootballCalculatorAdpProvider`, `PrivateCsvAdpProvider`, and `NoAdpProvider`. Automated ADP snapshots will run no more than daily unless documented provider limits permit otherwise.

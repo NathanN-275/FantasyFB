@@ -331,6 +331,60 @@ export const seasonStatistics = pgTable(
   ]
 );
 
+/** Provider-normalized team totals; the UI reads these instead of aggregating player rows. */
+export const teamWeeklyStatistics = pgTable(
+  "team_weekly_statistics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => nflTeams.id, { onDelete: "restrict" }),
+    seasonId: uuid("season_id")
+      .notNull()
+      .references(() => seasons.id, { onDelete: "restrict" }),
+    week: integer("week").notNull(),
+    datasetVersionId: uuid("dataset_version_id")
+      .notNull()
+      .references(() => datasetVersions.id, { onDelete: "restrict" }),
+    values: jsonb("values").notNull(),
+    createdAt
+  },
+  (table) => [
+    unique("team_weekly_statistics_team_season_week_dataset_unique").on(
+      table.teamId,
+      table.seasonId,
+      table.week,
+      table.datasetVersionId
+    ),
+    check("team_weekly_statistics_week_positive", sql`${table.week} > 0`)
+  ]
+);
+
+export const teamSeasonStatistics = pgTable(
+  "team_season_statistics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => nflTeams.id, { onDelete: "restrict" }),
+    seasonId: uuid("season_id")
+      .notNull()
+      .references(() => seasons.id, { onDelete: "restrict" }),
+    datasetVersionId: uuid("dataset_version_id")
+      .notNull()
+      .references(() => datasetVersions.id, { onDelete: "restrict" }),
+    values: jsonb("values").notNull(),
+    createdAt
+  },
+  (table) => [
+    unique("team_season_statistics_team_season_dataset_unique").on(
+      table.teamId,
+      table.seasonId,
+      table.datasetVersionId
+    )
+  ]
+);
+
 export const projectionRuns = pgTable(
   "projection_runs",
   {

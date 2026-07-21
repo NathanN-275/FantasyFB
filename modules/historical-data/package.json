@@ -1,0 +1,19 @@
+{
+  "name": "@fantasyfb/historical-data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fantasyfb/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.2"
+  }
+}

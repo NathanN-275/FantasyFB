@@ -8,7 +8,8 @@ async function migrationSql() {
   const files = [
     "0000_spotty_exodus.sql",
     "0001_brief_bloodstrike.sql",
-    "0002_authentication_sessions.sql"
+    "0002_authentication_sessions.sql",
+    "0003_organic_leo.sql"
   ];
   return Promise.all(
     files.map((file) => readFile(fileURLToPath(new URL(file, migrationDirectory)), "utf8"))
@@ -25,6 +26,8 @@ describe("initial database migrations", () => {
       "seasons",
       "weekly_statistics",
       "season_statistics",
+      "team_weekly_statistics",
+      "team_season_statistics",
       "data_sources",
       "dataset_versions",
       "projection_runs",

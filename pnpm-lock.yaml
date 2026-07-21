@@ -105,6 +105,16 @@ importers:
         specifier: ^3.1.2
         version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
+  modules/historical-data:
+    dependencies:
+      '@fantasyfb/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
+
   modules/league-gateway: {}
 
   modules/news-intelligence: {}

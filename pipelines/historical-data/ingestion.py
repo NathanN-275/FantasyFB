@@ -357,7 +357,17 @@ class JsonHistoricalDataRepository:
         key = _dataset_key(dataset)
         state["datasets"][key] = {
             "metadata": asdict(dataset),
-            "records": [asdict(record) for record in records],
+            "weekly_player_statistics": [asdict(record) for record in records],
+            "season_player_statistics": [
+                asdict(record) for record in aggregate_player_season_statistics(records)
+            ],
+            "weekly_team_statistics": [
+                asdict(record) for record in aggregate_team_weekly_statistics(records)
+            ],
+            "season_team_statistics": [
+                asdict(record)
+                for record in aggregate_team_season_statistics(aggregate_team_weekly_statistics(records))
+            ],
             "quarantined": [asdict(record) for record in quarantined],
         }
         state["last_valid"][key] = asdict(dataset)
