@@ -1,0 +1,19 @@
+# Architecture overview
+
+FantasyFB is a pnpm monorepo. `apps/web` owns HTTP and React presentation; it may compose public package exports but cannot contain football business logic or direct database queries. `modules/*` own provider-neutral business capabilities and expose a single root entry point. `packages/*` contain shared contracts and replaceable infrastructure adapters.
+
+## Boundaries
+
+- UI components never call Drizzle. Server composition creates repositories and passes interfaces into domain modules.
+- Provider adapters normalize external data before it reaches a module. nflverse and Fantasy Football Calculator details remain inside their later provider implementations.
+- Private records require authorization at the server query/action/route boundary. Route groups are organization aids, not the authorization mechanism.
+- Draft state will be reduced from an append-only event history. Realtime transports will remain replaceable.
+- PostgreSQL and Vercel choices belong to infrastructure, not domain modules.
+
+The `pnpm boundaries` command rejects imports into another workspace's `src` or `internal` path. Workspace package exports are the only supported cross-module import surface.
+
+## Planned data-provider families
+
+Prompt 5 will implement `HistoricalDataProvider` with `NflverseHistoricalDataProvider`. It will use `nflreadpy`, normalize all records, review each enabled dataset's license and attribution, and preserve the last valid dataset on failure.
+
+Prompt 8 will implement `AdpProvider` with `FantasyFootballCalculatorAdpProvider`, `PrivateCsvAdpProvider`, and `NoAdpProvider`. Automated ADP snapshots will run no more than daily unless documented provider limits permit otherwise.

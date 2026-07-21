@@ -1,0 +1,13 @@
+{
+  "name": "@fantasyfb/player-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"process.exit(0)\""
+  }
+}

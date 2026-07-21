@@ -1,0 +1,39 @@
+{
+  "name": "fantasyfb",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0",
+    "python": ">=3.9"
+  },
+  "scripts": {
+    "build": "pnpm --filter @fantasyfb/web build",
+    "dev": "pnpm --filter @fantasyfb/web dev",
+    "lint": "pnpm exec eslint . --max-warnings 0",
+    "format": "pnpm exec prettier --write .",
+    "format:check": "pnpm exec prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:python": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest pipelines; else python3 -m pytest pipelines; fi",
+    "test:e2e": "pnpm --filter @fantasyfb/web exec playwright test",
+    "boundaries": "node scripts/validate-import-boundaries.mjs",
+    "db:generate": "pnpm --filter @fantasyfb/database drizzle-kit generate",
+    "db:migrate": "pnpm --filter @fantasyfb/database drizzle-kit migrate",
+    "db:validate": "pnpm --filter @fantasyfb/database db:validate",
+    "db:seed": "pnpm --filter @fantasyfb/database db:seed",
+    "db:test:reset": "pnpm --filter @fantasyfb/database db:test:reset"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.24.0",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.3.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.0"
+  }
+}

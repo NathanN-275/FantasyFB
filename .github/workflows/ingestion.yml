@@ -1,0 +1,15 @@
+name: Scheduled ingestion
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 12 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Ingestion providers are intentionally introduced in Prompt 5 and Prompt 8."

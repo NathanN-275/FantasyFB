@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["historical-data", "expert-imports", "projections", "news"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
