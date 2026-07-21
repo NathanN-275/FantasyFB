@@ -41,7 +41,45 @@ METADATA_COLUMNS = {
     "opponent_team",
     "fantasy_points_ppr",
     "fantasy_points",
+    "season_type",
 }
+
+# These are the application-owned names exposed by the historical-data module.
+# Providers can omit any field, and provider-specific column names never leave
+# this adapter. The aliases cover nflverse's current weekly player-stats schema
+# plus common names used by replacement providers.
+STAT_FIELD_ALIASES: Mapping[str, Tuple[str, ...]] = {
+    "games_played": ("games", "games_played"),
+    "games_started": ("games_started",),
+    "passing_attempts": ("attempts", "passing_attempts", "pass_attempts"),
+    "passing_completions": ("completions", "passing_completions", "pass_completions"),
+    "passing_yards": ("passing_yards", "pass_yards"),
+    "passing_touchdowns": ("passing_tds", "passing_touchdowns", "pass_touchdowns"),
+    "interceptions": ("interceptions", "passing_interceptions", "pass_interceptions"),
+    "carries": ("carries", "rushing_attempts"),
+    "rushing_yards": ("rushing_yards",),
+    "rushing_touchdowns": ("rushing_tds", "rushing_touchdowns"),
+    "targets": ("targets",),
+    "receptions": ("receptions",),
+    "receiving_yards": ("receiving_yards",),
+    "receiving_touchdowns": ("receiving_tds", "receiving_touchdowns"),
+    "fumbles": ("fumbles",),
+    "fumbles_lost": ("fumbles_lost",),
+    "kick_returns": ("kick_returns",),
+    "punt_returns": ("punt_returns",),
+    "return_yards": ("return_yards", "kickoff_return_yards", "punt_return_yards"),
+    "return_touchdowns": ("return_tds", "return_touchdowns"),
+    "field_goals_made": ("field_goals_made", "field_goals"),
+    "field_goals_attempted": ("field_goals_attempted", "field_goal_attempts"),
+    "extra_points_made": ("extra_points_made",),
+    "extra_points_attempted": ("extra_points_attempted",),
+    "defensive_sacks": ("sacks", "defensive_sacks"),
+    "defensive_interceptions": ("defensive_interceptions", "interceptions_defense"),
+    "defensive_fumble_recoveries": ("defensive_fumble_recoveries", "fumble_recoveries"),
+    "defensive_touchdowns": ("defensive_tds", "defensive_touchdowns"),
+    "snap_share": ("snap_share", "offense_snap_pct"),
+}
+NON_ADDITIVE_FIELDS = {"snap_share"}
 
 
 class HistoricalDataProvider(Protocol):
@@ -100,6 +138,15 @@ class HistoricalStatistic:
 
 
 @dataclass(frozen=True)
+class TeamHistoricalStatistic:
+    canonical_id: str
+    team_abbreviation: str
+    season: int
+    week: int
+    values: Mapping[str, float]
+
+
+@dataclass(frozen=True)
 class QuarantinedRecord:
     source_row: int
     reason: str
@@ -122,6 +169,9 @@ class IngestionReport:
     last_known_successful_update: Optional[datetime] = None
     unresolved_identity_count: int = 0
     ambiguous_identity_count: int = 0
+    exact_identity_count: int = 0
+    confident_identity_count: int = 0
+    duplicate_record_count: int = 0
     quarantine_reasons: Dict[str, int] = field(default_factory=dict)
 
     def to_json(self) -> str:
@@ -227,6 +277,18 @@ class HistoricalIngestionService:
                     report.ambiguous_identity_count += 1
             else:
                 accepted.append(result)
+                if _identity_confidence(row) == "exact":
+                    report.exact_identity_count += 1
+                else:
+                    report.confident_identity_count += 1
+
+        accepted, duplicate_records = _remove_duplicate_records(accepted)
+        for duplicate in duplicate_records:
+            quarantined.append(duplicate)
+            report.quarantine_reasons[duplicate.reason] = (
+                report.quarantine_reasons.get(duplicate.reason, 0) + 1
+            )
+        report.duplicate_record_count = len(duplicate_records)
 
         report.accepted_record_count = len(accepted)
         report.quarantined_record_count = len(quarantined)
@@ -338,6 +400,9 @@ class PostgresHistoricalDataRepository:
     ) -> None:
         if quarantined:
             raise ValueError("Quarantined records cannot be persisted as a complete dataset.")
+        player_seasons = aggregate_player_season_statistics(records)
+        team_weeks = aggregate_team_weekly_statistics(records)
+        team_seasons = aggregate_team_season_statistics(team_weeks)
         try:
             import psycopg  # type: ignore[import-not-found]
             from psycopg.types.json import Jsonb  # type: ignore[import-not-found]
@@ -447,6 +512,48 @@ class PostgresHistoricalDataRepository:
                             Jsonb(dict(record.values)),
                         ),
                     )
+                for record in player_seasons:
+                    team_id = str(uuid5(NAMESPACE_URL, f"nfl-team:{record.team_abbreviation}"))
+                    cursor.execute(
+                        """
+                        INSERT INTO season_statistics
+                            (player_id, team_id, season_id, dataset_version_id, values)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (player_id, team_id, season_id, dataset_version_id) DO UPDATE
+                        SET values = EXCLUDED.values
+                        """,
+                        (
+                            record.player_canonical_id,
+                            team_id,
+                            season_id,
+                            dataset_version_id,
+                            Jsonb(dict(record.values)),
+                        ),
+                    )
+                for record in team_weeks:
+                    team_id = str(uuid5(NAMESPACE_URL, f"nfl-team:{record.team_abbreviation}"))
+                    cursor.execute(
+                        """
+                        INSERT INTO team_weekly_statistics
+                            (team_id, season_id, week, dataset_version_id, values)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (team_id, season_id, week, dataset_version_id) DO UPDATE
+                        SET values = EXCLUDED.values
+                        """,
+                        (team_id, season_id, record.week, dataset_version_id, Jsonb(dict(record.values))),
+                    )
+                for record in team_seasons:
+                    team_id = str(uuid5(NAMESPACE_URL, f"nfl-team:{record.team_abbreviation}"))
+                    cursor.execute(
+                        """
+                        INSERT INTO team_season_statistics
+                            (team_id, season_id, dataset_version_id, values)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (team_id, season_id, dataset_version_id) DO UPDATE
+                        SET values = EXCLUDED.values
+                        """,
+                        (team_id, season_id, dataset_version_id, Jsonb(dict(record.values))),
+                    )
 
     def store_failure(self, dataset: DatasetMetadata, report: IngestionReport) -> None:
         # No mutation is intentional: the last valid dataset remains queryable.
@@ -463,6 +570,8 @@ def _normalize_record(
     week = _integer(row.get("week"))
     if season != expected_season or week is None or week < 1:
         return _quarantine(source_row, "invalid-season-or-week", row)
+    if not _is_regular_season(row.get("season_type")):
+        return _quarantine(source_row, "postseason-excluded", row)
     team = _string(row.get("recent_team")) or _string(row.get("team"))
     if not team:
         return _quarantine(source_row, "missing-team", row)
@@ -472,7 +581,7 @@ def _normalize_record(
     # Identifier types have independent namespaces (for example GSIS and PFR IDs),
     # so different values are not ambiguous. Prefer the provider's most stable ID.
     external_id = next(identifiers[name] for name in STRONG_PLAYER_ID_COLUMNS if name in identifiers)
-    values = _numeric_values(row)
+    values = _normalized_values(row)
     if not values:
         return _quarantine(source_row, "missing-numeric-statistics", row)
     player_canonical_id = str(uuid5(NAMESPACE_URL, f"{SOURCE_NAME}:player:{external_id}"))
@@ -500,15 +609,136 @@ def _strong_identifiers(row: Mapping[str, Any]) -> Dict[str, str]:
     }
 
 
-def _numeric_values(row: Mapping[str, Any]) -> Dict[str, float]:
+def _identity_confidence(row: Mapping[str, Any]) -> str:
+    """Stable NFL/GSIS identifiers are exact; other reviewed provider IDs are confident."""
+    return "exact" if any(_string(row.get(name)) for name in ("gsis_id", "nfl_id")) else "confident"
+
+
+def _is_regular_season(value: Any) -> bool:
+    if value is None:
+        return True
+    normalized = _string(value)
+    return normalized is not None and normalized.upper() in {"REG", "REGULAR", "REGULAR_SEASON"}
+
+
+def _normalized_values(row: Mapping[str, Any]) -> Dict[str, float]:
+    """Return only canonical stat names and omit unavailable provider categories."""
     values: Dict[str, float] = {}
-    for key, value in row.items():
-        if key in METADATA_COLUMNS or not isinstance(value, (int, float)) or isinstance(value, bool):
-            continue
-        numeric = float(value)
-        if math.isfinite(numeric):
-            values[key] = numeric
+    for canonical_name, aliases in STAT_FIELD_ALIASES.items():
+        for alias in aliases:
+            value = row.get(alias)
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                continue
+            numeric = float(value)
+            if math.isfinite(numeric):
+                values[canonical_name] = numeric
+                break
     return values
+
+
+def _remove_duplicate_records(
+    records: Sequence[HistoricalStatistic],
+) -> Tuple[List[HistoricalStatistic], List[QuarantinedRecord]]:
+    """Keep a single stable record and report duplicate provider rows explicitly."""
+    unique: List[HistoricalStatistic] = []
+    duplicates: List[QuarantinedRecord] = []
+    seen: set[str] = set()
+    for source_row, record in enumerate(records):
+        if record.canonical_id in seen:
+            duplicates.append(
+                QuarantinedRecord(
+                    source_row=source_row,
+                    reason="duplicate-record",
+                    identifiers={"player_external_id": record.player_external_id},
+                )
+            )
+            continue
+        seen.add(record.canonical_id)
+        unique.append(record)
+    return unique, duplicates
+
+
+def aggregate_player_season_statistics(
+    records: Sequence[HistoricalStatistic],
+) -> List[HistoricalStatistic]:
+    """Aggregate a player separately for each team, preserving traded-player history."""
+    grouped: Dict[Tuple[str, str, int, str], List[HistoricalStatistic]] = {}
+    for record in records:
+        key = (record.player_canonical_id, record.team_abbreviation, record.season, record.position or "")
+        grouped.setdefault(key, []).append(record)
+    result: List[HistoricalStatistic] = []
+    for (_, team, season, _), weekly_records in sorted(grouped.items()):
+        first = weekly_records[0]
+        result.append(
+            HistoricalStatistic(
+                canonical_id=str(
+                    uuid5(
+                        NAMESPACE_URL,
+                        f"{SOURCE_IDENTIFIER}:{first.player_canonical_id}:{season}:season:{team}",
+                    )
+                ),
+                player_canonical_id=first.player_canonical_id,
+                player_external_id=first.player_external_id,
+                player_name=first.player_name,
+                position=first.position,
+                team_abbreviation=team,
+                season=season,
+                week=0,
+                values=_aggregate_values([record.values for record in weekly_records]),
+            )
+        )
+    return result
+
+
+def aggregate_team_weekly_statistics(
+    records: Sequence[HistoricalStatistic],
+) -> List[TeamHistoricalStatistic]:
+    grouped: Dict[Tuple[str, int, int], List[HistoricalStatistic]] = {}
+    for record in records:
+        grouped.setdefault((record.team_abbreviation, record.season, record.week), []).append(record)
+    return [
+        TeamHistoricalStatistic(
+            canonical_id=str(uuid5(NAMESPACE_URL, f"{SOURCE_IDENTIFIER}:team:{team}:{season}:{week}")),
+            team_abbreviation=team,
+            season=season,
+            week=week,
+            values=_aggregate_values([record.values for record in team_records]),
+        )
+        for (team, season, week), team_records in sorted(grouped.items())
+    ]
+
+
+def aggregate_team_season_statistics(
+    records: Sequence[TeamHistoricalStatistic],
+) -> List[TeamHistoricalStatistic]:
+    grouped: Dict[Tuple[str, int], List[TeamHistoricalStatistic]] = {}
+    for record in records:
+        grouped.setdefault((record.team_abbreviation, record.season), []).append(record)
+    return [
+        TeamHistoricalStatistic(
+            canonical_id=str(uuid5(NAMESPACE_URL, f"{SOURCE_IDENTIFIER}:team:{team}:{season}:season")),
+            team_abbreviation=team,
+            season=season,
+            week=0,
+            values=_aggregate_values([record.values for record in weekly_records]),
+        )
+        for (team, season), weekly_records in sorted(grouped.items())
+    ]
+
+
+def _aggregate_values(values: Sequence[Mapping[str, float]]) -> Dict[str, float]:
+    result: Dict[str, float] = {}
+    counts: Dict[str, int] = {}
+    for value_map in values:
+        for field, value in value_map.items():
+            if field in NON_ADDITIVE_FIELDS:
+                result[field] = result.get(field, 0.0) + value
+                counts[field] = counts.get(field, 0) + 1
+            else:
+                result[field] = result.get(field, 0.0) + value
+    for field, count in counts.items():
+        result[field] /= count
+    return result
 
 
 def _quarantine(source_row: int, reason: str, row: Mapping[str, Any]) -> QuarantinedRecord:

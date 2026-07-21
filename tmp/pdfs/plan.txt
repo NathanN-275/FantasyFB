@@ -1,0 +1,2686 @@
+--- PAGE 1 ---
+Fantasy Football Platform — Modular Codex Build
+Prompts
+Use these prompts sequentially. Complete, test, review, and commit each module before moving to the next
+prompt.
+Do not ask Codex to build the entire platform in one pass.
+Shared project context
+Include this section at the beginning of every Codex prompt.
+We are building [PROJECT_NAME], a personal-first fantasy football analysis platform for the 2026 NFL
+season.
+The source repository will be publicly hosted on GitHub as a portfolio project.
+The deployed application will have two separate experiences:
+A public portfolio demonstration using clearly labeled sample data.
+A private personal workspace containing real league information, rankings, imports, draft history,
+and preferences.
+Primary product goals
+The platform should serve as an all-in-one fantasy football hub containing:
+2026 player projections
+Previous-season statistics
+Custom statistical projections
+Authorized expert projections
+Expert Consensus Rankings when legally obtained
+Custom Model Rankings
+Hybrid rankings
+Average Draft Position data
+Player research pages
+Player trade comparisons
+Multi-player trade packages
+A live draft assistant
+Draft rankings and tiers
+A draft guide
+Sleeper league linking
+1. 
+2. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1
+--- PAGE 2 ---
+Manual ESPN league configuration
+Experimental ESPN draft synchronization architecture
+NFL, team, player , injury, and transaction news
+Fully configurable league scoring
+Fully configurable league and roster sizes
+The product should initially be designed for one private user , but its architecture should permit future multi-
+user support.
+Technology direction
+Use:
+Next.js
+React
+TypeScript
+Vercel deployment
+Neon serverless PostgreSQL
+Drizzle ORM
+Explicit SQL migrations
+Auth.js or Better Auth
+GitHub OAuth
+Python for projection and data-science pipelines
+GitHub Actions for CI and scheduled data pipelines
+Optional Vercel Cron jobs for lightweight scheduled tasks
+Zod for runtime validation
+Vitest for TypeScript unit tests
+Pytest for Python tests
+Playwright for critical browser workflows
+pnpm workspaces
+Do not use Supabase.
+Database requirements
+Neon PostgreSQL is the primary database.
+Use Drizzle ORM for:
+Database schemas
+Typed database access
+SQL migration generation
+Repository implementations
+The database architecture must remain portable to another PostgreSQL provider .
+Do not use Neon-specific functionality inside domain modules.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+2
+--- PAGE 3 ---
+Neon-specific configuration may exist only inside infrastructure and deployment modules.
+Do not call Drizzle directly from UI components.
+All database access must pass through documented repository interfaces.
+Authentication requirements
+Keep authentication behind a narrow AuthProvider interface.
+Initially implement GitHub OAuth using Auth.js or Better Auth.
+The private version should support an allowlist containing one or more GitHub user IDs.
+Do not use display names or GitHub usernames as the permanent authorization identifier . Use the
+immutable provider account ID.
+The public demo must not require authentication.
+The private workspace must require authentication.
+Do not expose OAuth client secrets to the browser .
+Realtime requirements
+Do not require database-level realtime features in version one.
+For live Sleeper drafts:
+Poll the documented Sleeper draft endpoint.
+Normalize new draft picks.
+Submit them to the draft event engine.
+update the browser state immediately.
+Persist the append-only draft event log to PostgreSQL.
+Design realtime behavior behind interfaces so WebSockets, Server-Sent Events, polling, or another realtime
+service could be added later .
+Do not make the domain layer dependent on a particular realtime vendor .
+Storage requirements
+Keep file and object storage behind a StorageProvider interface.
+1. 
+2. 
+3. 
+4. 
+5. 
+3
+--- PAGE 4 ---
+Private CSV imports should preferably be:
+Parsed and validated on the server .
+Stored as normalized database records.
+Deleted after processing unless the user explicitly chooses to preserve the original file.
+Use Vercel Blob or another object-storage service only when files cannot reasonably be represented as
+normalized database records.
+Do not place private CSVs, licensed rankings, private league data, or generated private artifacts inside the
+public GitHub repository.
+Fantasy product requirements
+The platform must support:
+Custom league size
+Custom roster size
+Custom starting positions
+Custom bench size
+Fully configurable fantasy scoring
+Full-PPR preset
+Half-PPR preset
+Standard-scoring preset
+Custom scoring bonuses
+Decimal and negative scoring values
+Sleeper integration
+Manual league configuration
+Manual draft mode
+Experimental ESPN companion architecture
+Historical player data
+Custom projections
+Authorized expert projections
+Expert Rank
+Model Rank
+Hybrid Rank
+ADP rankings
+Multi-player trade comparisons
+Live draft recommendations
+Draft guide
+News aggregation
+Player and team research
+Do not assume a 10-team or 12-team league.
+Do not assume standard roster positions.
+1. 
+2. 
+3. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+4
+--- PAGE 5 ---
+Do not assume full PPR unless the user selects that preset.
+Expert data requirements
+The platform should support both expert projections and an original statistical model.
+Expert data may only come from:
+Authorized APIs
+Licensed data feeds
+Private CSV files supplied by the user
+Other sources whose terms explicitly permit the intended use
+Do not scrape FantasyPros or another commercial fantasy platform.
+Do not label a ranking as ECR unless it actually represents authorized aggregated expert rankings.
+When expert data is unavailable:
+Display Model Rank
+Hide Expert Rank
+Explain why expert data is unavailable
+Never silently use Model Rank as ECR
+The system should distinguish:
+Expert projection
+Expert ranking
+Model projection
+Model ranking
+Hybrid projection
+Hybrid ranking
+ADP
+ESPN requirements
+Sleeper should be treated as the first officially supported automatic league and draft integration.
+ESPN should initially support:
+Manual league settings
+Manual roster entry
+Manual draft entry
+Portable import and export
+An interface for future automated integrations
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+5
+--- PAGE 6 ---
+Do not store:
+ESPN passwords
+ESPN session cookies
+espn_s2
+SWID
+Browser cookies
+Private authentication tokens
+Do not implement a deployed ESPN scraper .
+An experimental browser companion may eventually observe a draft page already open in the user's
+browser and emit normalized pick events.
+That companion must remain:
+Separate from the core application
+Optional
+Disabled by default
+Clearly labeled unofficial and experimental
+Independent from the primary draft engine
+Engineering principles
+Use the following software-design principles:
+Deep modules
+Information hiding
+Functional core and imperative shell
+Dependency inversion
+Provider interfaces
+Anti-corruption layers
+Explicit module boundaries
+Composition over inheritance
+Configuration-driven behavior
+Schema validation at every external boundary
+Append-only draft events
+Idempotent ingestion pipelines
+Explicit data provenance
+Versioned datasets
+Versioned projection models
+Graceful handling of stale data
+Graceful handling of unavailable providers
+Deterministic business logic
+Fixture-based integration tests
+Portable infrastructure interfaces
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+6
+--- PAGE 7 ---
+Avoid:
+Large collections of shallow service wrappers
+Provider-specific logic in React components
+Domain entities coupled to API response objects
+Direct database queries inside UI components
+Circular module dependencies
+Global mutable state
+Silent error recovery
+Fabricated fallback data
+Unexplained ranking scores
+Unversioned model output
+Unvalidated external JSON
+Premature microservices
+Module boundary requirements
+Each major module must expose one documented public entry point.
+For example:
+import{ createDraftRoom} from"@project/draft-room";
+import{ createTradeEngine} from"@project/trade-engine";
+import{ createRankingEngine} from"@project/ranking-engine";
+Other modules may not import from another module's internal directories.
+This should be enforced through:
+ESLint rules
+TypeScript path configuration
+Package exports
+Architecture tests where useful
+Data provenance requirements
+Every externally sourced or generated record must be traceable.
+Record, when applicable:
+Source name
+Source identifier
+Source URL
+Season
+Week
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+7
+--- PAGE 8 ---
+Retrieved timestamp
+Effective timestamp
+Dataset version
+Model version
+Import identifier
+License or usage note
+Validation status
+Freshness status
+Never present mock, fixture, stale, or sample data as current production information.
+Required workflow for every Codex task
+Before changing code:
+Inspect the repository.
+Read the existing architecture documentation.
+Summarize the current implementation.
+Identify conflicts between the task and existing code.
+Present a focused plan.
+Implement only the requested module.
+Add or update tests.
+Run relevant validation commands.
+Document decisions and limitations.
+List every file created or changed.
+Do not modify unrelated modules.
+Do not begin a subsequent module during the same task.
+Prompt 1 — Repository and architecture
+foundation
+Using the shared project context, establish the repository foundation.
+Objectives
+Create a pnpm workspace containing:
+fantasy-football-platform/
+├── apps/
+│   ├── web/
+│   └── espn-companion/
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+8
+--- PAGE 9 ---
+├── modules/
+│   ├── fantasy-core/
+│   ├── player-intelligence/
+│   ├── projection-engine/
+│   ├── ranking-engine/
+│   ├── league-gateway/
+│   ├── draft-room/
+│   ├── trade-engine/
+│   ├── news-intelligence/
+│   └── data-catalog/
+├── packages/
+│   ├── contracts/
+│   ├── database/
+│   ├── authentication/
+│   ├── storage/
+│   ├── observability/
+│   └── ui/
+├── pipelines/
+│   ├── historical-data/
+│   ├── expert-imports/
+│   ├── projections/
+│   └── news/
+├── drizzle/
+├── fixtures/
+├── docs/
+│   ├── architecture/
+│   ├── decisions/
+│   ├── data-sources/
+│   └── model-methodology/
+├── .github/
+│   └── workflows/
+└── README.md
+The apps/espn-companion workspace should initially contain documentation and an architectural
+placeholder only. Do not implement ESPN page observation yet.
+Configure
+Next.js
+Strict TypeScript
+pnpm workspaces
+ESLint
+Prettier
+Vitest
+Playwright
+Python virtual environment guidance
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+9
+--- PAGE 10 ---
+Pytest configuration
+Environment-variable validation
+Vercel deployment
+Neon database connection
+Drizzle configuration
+GitHub Actions
+Public and private route groups
+Module path aliases
+Package exports
+Import-boundary enforcement
+Environment variables
+Create validated server-side environment configuration for values such as:
+DATABASE_URL
+AUTH_SECRET
+AUTH_GITHUB_ID
+AUTH_GITHUB_SECRET
+AUTHORIZED_GITHUB_USER_IDS
+NEXT_PUBLIC_APP_URL
+Do not require all optional provider keys during local startup.
+Separate:
+Required server variables
+Optional provider variables
+Browser-safe public variables
+Never prefix secrets with NEXT_PUBLIC_.
+Architecture documentation
+Create architecture decision records for:
+Choosing Vercel
+Choosing Neon PostgreSQL
+Choosing Drizzle ORM
+Separating authentication from the database provider
+Avoiding database-level realtime in version one
+Using modular ingestion providers
+Supporting public and private application surfaces
+Treating ESPN automation as experimental
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+10
+--- PAGE 11 ---
+Database foundation
+Configure Drizzle but do not yet create the complete fantasy schema.
+Create only enough infrastructure to:
+Connect to Neon
+Run migrations
+Test a database connection
+Keep database access server-side
+Support local test configuration
+Do not place database code inside domain modules.
+CI requirements
+Create GitHub Actions for:
+Dependency installation
+Linting
+Type checking
+Unit tests
+Python tests
+Production build
+Migration validation
+Secret scanning where feasible
+Do not implement fantasy calculations or external API integrations yet.
+Stop after the repository foundation is complete and all configured checks pass.
+Prompt 2 — Canonical domain and scoring engine
+Using the shared project context, implement the canonical fantasy-football domain and scoring system.
+Canonical domain
+Represent:
+NFL players
+NFL teams
+Seasons
+Weeks
+Positions
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+11
+--- PAGE 12 ---
+League settings
+League size
+Roster slots
+Starting lineup requirements
+Bench requirements
+Fantasy statistics
+Player availability
+Injury status
+External provider identifiers
+Data provenance
+Draft picks
+Draft events
+Trade packages
+Projection records
+Ranking records
+ADP records
+Do not use provider-specific IDs as canonical primary identifiers.
+Use branded or strongly typed IDs where practical.
+Scoring engine
+Build a deep ScoringEngine module.
+Its public interface should accept:
+Validated league scoring rules
+A validated player or defense stat line
+It should return:
+Total fantasy points
+Category-by-category scoring
+Threshold bonuses
+Penalties
+Warnings
+Unsupported fields
+Missing-stat information
+Support:
+Decimal scoring values
+Negative scoring
+Passing scoring
+Rushing scoring
+Receiving scoring
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+12
+--- PAGE 13 ---
+Return scoring
+Kicker scoring
+Defense and special-teams scoring
+First-down scoring when configured
+Long-play bonuses
+Yardage threshold bonuses
+Custom point values
+Include presets for:
+Full PPR
+Half PPR
+Standard scoring
+Do not select a preset automatically.
+Design requirements
+The scoring calculation should be deterministic and side-effect-free.
+Database access must not exist inside the scoring engine.
+Provider-specific stat names must be normalized before entering the engine.
+Tests
+Add comprehensive tests for:
+Quarterbacks
+Running backs
+Wide receivers
+Tight ends
+Kickers
+Defenses
+Negative points
+Decimal values
+Bonuses
+Missing statistics
+Unsupported categories
+Custom league configurations
+Document:
+Supported categories
+Rounding policy
+Missing-value policy
+Bonus precedence
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+13
+--- PAGE 14 ---
+Extension procedure
+Stop after the domain and scoring engine are complete.
+Prompt 3 — Database schema and repositories
+Using the shared project context, design the initial Neon PostgreSQL schema and Drizzle repository layer .
+Required database areas
+Design tables for:
+Players
+NFL teams
+Player external IDs
+Seasons
+Weekly statistics
+Season statistics
+Data sources
+Dataset versions
+Projection runs
+Player projections
+Ranking runs
+Player rankings
+ADP snapshots
+League configurations
+League scoring rules
+Roster configurations
+Fantasy teams
+Fantasy rosters
+Drafts
+Draft events
+Draft queues
+Saved players
+Trade evaluations
+News records
+Player-news relationships
+Private data imports
+User accounts
+Authorized user identities
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+14
+--- PAGE 15 ---
+Privacy separation
+Distinguish between:
+Public football data
+Public sample data
+Private user configuration
+Private league data
+Private imported expert data
+Private draft history
+Do not rely only on frontend route protection.
+Every private database query must include authorization context.
+Repository layer
+Create narrow repository interfaces such as:
+PlayerRepository
+StatsRepository
+ProjectionRepository
+RankingRepository
+LeagueRepository
+DraftRepository
+TradeRepository
+NewsRepository
+ImportRepository
+Implement them with Drizzle in the infrastructure package.
+Domain modules must depend on repository interfaces, not Drizzle.
+Migrations
+Use explicit SQL migrations.
+Create:
+Migration generation command
+Migration application command
+Migration validation command
+Development seed command
+Test database reset command
+Seeds must use clearly labeled fixture data.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+15
+--- PAGE 16 ---
+Do not seed private league or licensed data.
+Tests
+Test:
+Foreign-key constraints
+Unique constraints
+Private/public separation
+External player ID uniqueness
+Idempotent inserts
+Dataset versioning
+Draft event ordering
+Migration execution
+Stop after the schema, repositories, migrations, and tests are complete.
+Prompt 4 — Authentication and private workspace
+authorization
+Using the shared project context, implement authentication and private-route authorization.
+Authentication provider
+Use either Auth.js or Better Auth.
+Prefer the option that currently integrates most cleanly with:
+Next.js
+GitHub OAuth
+PostgreSQL
+Drizzle
+Server-side sessions
+Explain the selection in an architecture decision record.
+Keep the implementation behind an AuthProvider interface.
+Single-user authorization
+Initially restrict the private workspace to an allowlist of immutable GitHub user IDs.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+16
+--- PAGE 17 ---
+The application should:
+Authenticate through GitHub.
+Retrieve the provider account ID.
+Compare it with the configured allowlist.
+Reject authenticated but unauthorized users.
+Permit public demo routes without authentication.
+Do not authorize based solely on:
+Email
+Display name
+GitHub username
+Route separation
+Create route groups similar to:
+(public)/
+(private)/
+(auth)/
+Private pages must be protected server-side.
+Private server actions and API handlers must independently verify authorization.
+Required screens
+Create minimal functional screens for:
+Sign in
+Unauthorized account
+Private workspace shell
+Sign out
+Account information
+Public demo entry
+Do not build fantasy features yet.
+Tests
+Test:
+Signed-out public access
+Signed-out private-route rejection
+1. 
+2. 
+3. 
+4. 
+5. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+17
+--- PAGE 18 ---
+Authorized GitHub account access
+Unauthorized GitHub account rejection
+Server action authorization
+API route authorization
+Session expiration
+Stop after authentication and authorization are secure and tested.
+Prompt 5 — Data catalog and ingestion
+framework
+Using the shared project context, create the ingestion and provenance framework.
+Provider contracts
+Create contracts for:
+Player metadata
+Historical statistics
+Schedules
+NFL rosters
+ADP
+Expert projections
+Expert rankings
+Injuries
+News
+Fantasy league data
+Fantasy draft data
+Every provider must output normalized internal records.
+External API response types must not leave the provider implementation.
+Data catalog
+Build a deep DataCatalog module.
+Each dataset should report:
+Dataset ID
+Source
+Source identifier
+Season
+Week when applicable
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+18
+--- PAGE 19 ---
+Retrieved timestamp
+Effective timestamp
+Dataset version
+License or usage note
+Record count
+Validation result
+Freshness status
+Import status
+Error status
+Last known successful update
+Ingestion behavior
+The framework must:
+Validate external responses
+Reject invalid records
+Quarantine malformed data
+Preserve the last valid dataset
+Support idempotent reruns
+Generate stable canonical IDs
+Match external player IDs
+Report unresolved identities
+Report ambiguous identities
+Never join solely on player display name when stronger identifiers exist
+Persist normalized results through repositories
+Avoid exposing partial datasets as complete
+Scheduled execution
+Support ingestion through GitHub Actions.
+Create a workflow that can:
+Run manually
+Run on a schedule
+Use repository secrets
+Produce an ingestion report
+Fail without deleting the last valid production dataset
+Lightweight jobs may optionally be callable through Vercel Cron, but the architecture must not depend
+entirely on Vercel Cron.
+Initial provider
+Implement one permitted historical-data provider .
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+19
+--- PAGE 20 ---
+Use fixture-based tests and one optional real integration smoke test.
+Stop after the ingestion framework, one provider , and data-health reporting are complete.
+Prompt 6 — Historical player data
+Using the shared project context, implement normalized historical NFL player and team statistics.
+Requirements
+Collect permitted data for previous NFL seasons, including the 2025 season when available.
+Normalize relevant fields such as:
+Games played
+Games started
+Passing attempts
+Passing completions
+Passing yards
+Passing touchdowns
+Interceptions
+Carries
+Rushing yards
+Rushing touchdowns
+Targets
+Receptions
+Receiving yards
+Receiving touchdowns
+Fumbles
+Return statistics
+Kicker statistics
+Defense statistics where available
+Snap share where available
+Team
+Position
+Season
+Week
+Do not assume every provider supplies every category.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+20
+--- PAGE 21 ---
+Player identity
+Build an identity-resolution process using:
+Stable provider IDs
+NFL IDs where available
+Secondary identifiers
+Team
+Position
+Date of birth when legally and appropriately available
+Name only as a lower-confidence fallback
+Generate reports for:
+Exact matches
+Confident matches
+Ambiguous matches
+Unresolved players
+Duplicate records
+Application access
+Expose historical information through one deep module interface.
+The UI should not construct historical aggregates from raw provider records.
+Tests
+Test:
+Multi-team seasons
+Traded players
+Position changes
+Duplicate names
+Name suffixes
+Missing weeks
+Postseason exclusion
+Invalid provider responses
+Stop after historical data is normalized, persisted, and retrievable.
+Prompt 7 — Custom projection engine
+Using the shared project context, build version one of the transparent projection system.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+21
+--- PAGE 22 ---
+Python pipeline
+Create a Python projection pipeline with a narrow application-facing interface.
+The pipeline should:
+Load normalized historical data
+Load team context
+Build position-specific features
+Avoid future-data leakage
+Train interpretable baseline models
+Backtest against previous seasons
+Produce season-level statistical projections
+Convert projected statistics into fantasy points using configurable scoring
+Produce floor , median, and ceiling estimates
+Produce confidence estimates
+Version the model
+Version the feature set
+Record training data ranges
+Export validated records
+Persist projection runs and outputs to PostgreSQL
+Position-specific models
+Do not treat all players identically.
+Create separate approaches for:
+Quarterbacks
+Running backs
+Wide receivers
+Tight ends
+Kickers if supported
+Defenses if supported
+Candidate features
+Evaluate features such as:
+Recent-season volume
+Multi-season weighted volume
+Games played
+Starts
+Attempts
+Carries
+Targets
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+22
+--- PAGE 23 ---
+Receptions
+Efficiency
+Touchdown rate
+Red-zone usage
+Snap share
+Team offensive volume
+Team pace
+Player age
+Player experience
+Team changes
+Quarterback changes
+Expected role
+Injury history
+Regression toward positional averages
+Do not include a feature merely because it is available.
+Document why each selected feature is relevant.
+Model standards
+Start with transparent baselines.
+Do not use a neural network unless backtesting demonstrates a meaningful and explainable benefit.
+Compare the final model against simple baselines such as:
+Previous-season points
+Previous-season per-game points
+Multi-season weighted average
+Positional average
+Outputs
+Each projection should include:
+Player
+Season
+Projected games
+Projected statistics
+Projected fantasy points
+Projected points per game
+Floor
+Median
+Ceiling
+Confidence
+Model version
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+23
+--- PAGE 24 ---
+Feature version
+Generated timestamp
+Scoring configuration identifier
+Documentation and testing
+Create:
+Methodology documentation
+Feature definitions
+Backtest results
+Model comparison tables
+Calibration analysis
+Known limitations
+Reproducible commands
+Pytest coverage
+TypeScript contract tests
+Stop after the model reproducibly generates validated projections.
+Prompt 8 — Expert imports and ADP providers
+Using the shared project context, implement authorized expert projections, rankings, and ADP imports.
+Expert data providers
+Create:
+AuthorizedExpertApiProvider
+PrivateCsvExpertProvider
+NoExpertDataProvider
+The authorized API provider should remain disabled unless valid credentials exist.
+Do not scrape commercial ranking websites.
+Private CSV imports
+Allow the authorized private user to upload supported CSV files.
+The import process should:
+Accept the file through an authenticated server route.
+Validate file size and type.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1. 
+2. 
+24
+--- PAGE 25 ---
+Parse the file server-side.
+Map columns through a configurable import profile.
+Resolve player identities.
+Report ambiguous and missing players.
+Show a preview.
+Require confirmation.
+Persist normalized private records.
+Remove the original file unless preservation was explicitly requested.
+Do not include imported files in GitHub or public build artifacts.
+ADP
+Implement one permitted ADP provider .
+Store snapshots rather than overwriting previous values.
+Track:
+Provider
+Scoring format
+League size
+Season
+Overall ADP
+Positional ADP
+Minimum pick
+Maximum pick
+Sample size when available
+Retrieved timestamp
+Graceful fallback
+When expert data is absent:
+Hide Expert Rank
+Hide Expert Projection
+Continue showing Model Rank
+Continue showing Model Projection
+Explain the missing provider
+Stop after expert imports and ADP snapshots work reliably.
+Prompt 9 — Ranking engine
+Using the shared project context, implement the ranking and tier engine.
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+9. 
+10. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+25
+--- PAGE 26 ---
+Inputs
+The RankingEngine should accept:
+Custom model projections
+Optional expert projections
+Optional expert rankings
+ADP snapshots
+Scoring settings
+League size
+Roster configuration
+Starting lineup configuration
+Replacement-level assumptions
+Hybrid weights
+Outputs
+Return:
+Model Rank
+Model Position Rank
+Expert Rank when available
+Expert Position Rank when available
+Hybrid Rank when configured
+FLEX Rank
+Tiers
+Replacement value
+Value over replacement
+Positional scarcity
+ADP value
+Floor
+Ceiling
+Risk
+Confidence
+Explanation
+Hybrid system
+Hybrid weights must be configurable.
+For example:
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+26
+--- PAGE 27 ---
+Expert projection weight: 50%
+Model projection weight: 35%
+Risk-adjusted replacement weight: 15%
+Do not hard-code this formula as the only option.
+Display the active formula and input availability.
+Do not generate a hybrid ranking when the required inputs are absent unless the user explicitly allows
+renormalizing the available weights.
+Tier generation
+Tier logic should be documented and reproducible.
+Do not generate tiers solely from arbitrary round numbers.
+Evaluate:
+Projection gaps
+Replacement value gaps
+Confidence
+Position scarcity
+Clustering methods where appropriate
+Tests
+Test:
+No expert data
+Missing ADP
+Ranking ties
+Different league sizes
+Unusual roster configurations
+Custom scoring
+Tier boundaries
+Hybrid weights
+Missing players
+Conflicting provider IDs
+Stop after rankings and tiers can be generated from validated inputs.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+27
+--- PAGE 28 ---
+Prompt 10 — Player intelligence and research
+interface
+Using the shared project context, build the player research module and interface.
+Deep module
+Create a PlayerIntelligence module whose public API returns a complete normalized player
+evaluation.
+It should combine:
+Player metadata
+Team
+Position
+Bye week
+Historical statistics
+Model projections
+Optional expert projections
+Model Rank
+Optional Expert Rank
+Optional Hybrid Rank
+ADP
+Risk
+Confidence
+Injury status
+News references
+Source provenance
+Data freshness
+User interface
+Build:
+Player directory
+Search
+Position filters
+Team filters
+Bye-week filters
+Ranking filters
+Injury filters
+Sortable tables
+Mobile player cards
+Player profile pages
+Projection comparisons
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+28
+--- PAGE 29 ---
+Historical charts
+Model-versus-expert comparisons
+Model-versus-ADP comparisons
+Floor , median, and ceiling display
+Source and freshness panel
+Missing-data states
+Stale-data warnings
+Visual direction
+Combine:
+Serious analytical dashboards
+Sports-media typography
+Editorial player cards
+Strong visual hierarchy
+Mobile draft-day usability
+Dense but readable tables
+Do not copy another fantasy platform's proprietary visual design.
+Accessibility
+Include:
+Keyboard navigation
+Semantic tables
+Screen-reader labels
+Visible focus states
+Sufficient contrast
+Reduced-motion support
+Non-color status indicators
+Stop after the player research experience is complete.
+Prompt 11 — League gateway
+Using the shared project context, implement league configuration and integrations.
+Deep module
+Create a LeagueGateway module returning normalized:
+League identity
+League provider
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+29
+--- PAGE 30 ---
+Team count
+Scoring rules
+Roster configuration
+Managers
+Teams
+Rosters
+Draft identity
+Draft order
+Draft status
+Provider capabilities
+Providers
+Implement:
+Sleeper league provider
+Manual league provider
+Portable league JSON import and export
+ESPN provider interface without a deployed scraper
+Sleeper integration
+Use only documented read-only endpoints.
+Allow the user to:
+Enter a username
+Discover leagues
+Select a league
+Import scoring
+Import roster configuration
+Import managers
+Import rosters
+Discover draft information
+Do not request a Sleeper password.
+Manual configuration
+Allow complete manual configuration of:
+League name
+Team count
+Scoring
+Starting positions
+Bench positions
+Injured-reserve positions
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1. 
+2. 
+3. 
+4. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+30
+--- PAGE 31 ---
+Team names
+Rosters
+Draft order
+ESPN
+Allow users to manually create an ESPN-based league profile.
+Do not request or store ESPN authentication cookies.
+The provider capability panel should clearly state:
+Automatic league import unavailable
+Automatic draft synchronization experimental
+Manual mode supported
+Portable imports supported
+Tests
+Test:
+Custom league sizes
+Unsupported scoring fields
+Missing provider records
+Sleeper rate limiting
+Provider failure
+Manual fallback
+Import and export round trips
+Stop after league information is normalized through one interface.
+Prompt 12 — Draft event engine
+Using the shared project context, implement draft-state tracking before recommendations.
+Event model
+Use an append-only event log.
+A draft event should contain:
+Stable event ID
+Draft ID
+Source
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+31
+--- PAGE 32 ---
+Overall pick
+Round
+Draft slot
+Fantasy team
+NFL player
+Keeper status
+Event type
+Provider timestamp
+Received timestamp
+Correction reference when applicable
+Supported event types
+Include:
+Pick recorded
+Pick corrected
+Pick removed
+Draft paused
+Draft resumed
+Draft completed
+Keeper assigned
+Pick traded
+Player mapping resolved
+Draft sources
+Implement:
+Sleeper polling source
+Manual entry source
+Fixture simulation source
+Future ESPN companion event contract
+Do not implement an ESPN scraper .
+Draft behavior
+Handle:
+Duplicate picks
+Out-of-order events
+Corrections
+Undo
+Keepers
+Traded picks
+Missing player mappings
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+32
+--- PAGE 33 ---
+Reconnection
+Stale provider responses
+Completed drafts
+Provider interruptions
+Persistence
+Persist append-only events to Neon PostgreSQL through DraftRepository.
+Do not update draft state by directly mutating many unrelated records.
+Derive current state by reducing the event history.
+Snapshots may be used for performance but must be reproducible from the event log.
+Interface
+Build:
+Draft board
+Recent picks
+Team rosters
+Available-player list
+Manual pick entry
+Keyboard controls
+Undo and correction tools
+Synchronization status
+Stale-data indicator
+Manual entry must be fast enough for a real ESPN draft.
+Deterministic replay
+Replaying the same event history must always produce the same draft state.
+Add deterministic replay tests.
+Stop after draft synchronization, persistence, and replay are reliable.
+Prompt 13 — Draft recommendation engine
+Using the shared project context, implement draft recommendations on top of the draft event engine.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+33
+--- PAGE 34 ---
+Inputs
+Consider:
+Available players
+Model rankings
+Expert rankings when available
+Hybrid rankings
+League scoring
+League size
+Starting lineup
+Existing roster
+Positional scarcity
+Tier boundaries
+Replacement value
+ADP
+Expected availability
+Floor
+Ceiling
+Risk
+Bye weeks
+Remaining teams' positional needs
+User preferences
+Recommendation strategies
+Return recommendations for:
+Best overall value
+Safest selection
+Highest upside
+Positional need
+Tier protection
+Contrarian selection
+Explanation
+Every recommendation must include:
+Relevant ranking
+Positional need
+Tier information
+Expected availability
+ADP difference
+Roster effect
+Risk
+Explanation
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+34
+--- PAGE 35 ---
+Do not produce one unexplained proprietary score.
+Expected availability
+Implement a simple interpretable expected-availability model first.
+Evaluate it using historical or simulated drafts.
+Do not claim certainty about whether a player will remain available.
+Interface
+Build:
+Recommendation panel
+Draft queue
+Watchlist
+Position filters
+Roster-needs panel
+Tier-drop warnings
+Next-pick forecast
+Pick history
+Synchronization indicator
+Manual mode indicator
+Source freshness
+Test:
+Snake drafts
+Custom team counts
+Third-round reversal if configured
+Unusual roster settings
+Custom scoring
+Keepers
+Traded picks
+Missing expert data
+Stop after recommendations work in manual and Sleeper simulations.
+Prompt 14 — Multi-player trade engine
+Using the shared project context, implement the trade analyzer .
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+35
+--- PAGE 36 ---
+Requirements
+Support multiple players on Side A and Side B.
+Build a deep TradeEngine that evaluates:
+Raw player value
+Starting-lineup value
+Bench value
+Replacement value
+Position scarcity
+Package consolidation value
+Roster-context value
+Floor
+Ceiling
+Risk
+Short-term outlook
+Full-season outlook
+Projection confidence
+Inputs
+Accept:
+League settings
+Roster settings
+Current rosters
+Players on each side
+Model projections
+Optional expert projections
+Rankings
+Injury status
+Schedule context when available
+Outputs
+Return:
+Side totals
+Before-and-after starting lineups
+Before-and-after projected roster points
+Positional effects
+Bench effects
+Replacement-player assumptions
+Risk comparison
+Best plausible outcome
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+36
+--- PAGE 37 ---
+Worst plausible outcome
+Confidence
+Missing-data warnings
+Written explanation
+Do not determine fairness by merely summing arbitrary trade-chart numbers.
+Generic mode
+When no league is selected, clearly state that the result is based on generic configurable-league
+assumptions.
+Display those assumptions.
+Persistence
+Allow the private user to save trade evaluations.
+Public demos must use fixtures and must not expose private roster data.
+Tests
+Test:
+One-for-one
+Two-for-one
+Three-for-two
+Empty lineup slots
+Bench upgrades
+Positional scarcity
+Injured players
+Missing projections
+Equal raw values but different roster impacts
+Custom scoring
+Custom league sizes
+Stop after the trade analyzer is tested and documented.
+Prompt 15 — News intelligence
+Using the shared project context, implement the news aggregation module using only permitted APIs and
+feeds.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+37
+--- PAGE 38 ---
+Normalized news model
+Include:
+Headline
+Source
+Original article URL
+Publication time
+Retrieved time
+Permitted excerpt
+Related players
+Related NFL teams
+Category
+Injury information when explicitly reported
+Fantasy relevance
+Entity-match confidence
+Data freshness
+Features
+Implement:
+Deduplication
+Player matching
+Team matching
+Team filters
+Position filters
+Player filters
+Injury category
+Transaction category
+Depth-chart category
+Contract category
+Suspension category
+Source attribution
+Stale-feed detection
+Original article links
+Do not republish complete articles.
+Do not scrape article bodies unless the source explicitly permits it.
+Interpretation
+Separate:
+Reported facts
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+38
+--- PAGE 39 ---
+Application-generated fantasy interpretation
+Do not infer an official injury designation from article sentiment.
+Generated fantasy interpretation must identify the data or reasoning used.
+Scheduled pipeline
+Use GitHub Actions for scheduled aggregation.
+Persist normalized news records to Neon PostgreSQL.
+Preserve the last valid feed when a source fails.
+Tests
+Test:
+Duplicate stories
+Syndicated stories
+Ambiguous player names
+Players changing teams
+Malformed feeds
+Missing timestamps
+Provider outage
+Stale stories
+Stop after the news feed is reliable and attributable.
+Prompt 16 — Draft guide
+Using the shared project context, build the data-driven draft guide.
+Sections
+Include:
+Overall strategy
+Position strategy
+League-size effects
+Scoring-format effects
+Round-by-round targets
+Player tiers
+Sleepers
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+39
+--- PAGE 40 ---
+Breakout candidates
+Bust-risk players
+Rookies
+Handcuffs
+Late-round targets
+Bye-week planning
+Roster construction
+Position scarcity
+Players with large Model Rank versus ADP differences
+Draft-day checklist
+Fantasy glossary
+Data grounding
+Every player-specific claim must be supported by:
+Model output
+Authorized expert information
+Historical data
+ADP
+Roster context
+Clearly documented editorial input
+Do not generate unsupported factual claims.
+Versioning
+Each guide build must record:
+Season
+Generated date
+Dataset versions
+Projection version
+Ranking version
+ADP snapshot
+Scoring assumptions
+League-size assumptions
+Interface
+Provide:
+Web guide
+Printable view
+Mobile view
+Position navigation
+Player links
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+40
+--- PAGE 41 ---
+Data-source notes
+Last-updated information
+Stop after the draft guide is generated from structured, traceable data.
+Prompt 17 — Public demo and private workspace
+Using the shared project context, finalize the separation between public and private experiences.
+Public experience
+Create:
+Product landing page
+Public feature overview
+Sample league
+Sample draft
+Sample player profiles
+Sample rankings
+Sample trade evaluation
+Architecture overview
+Projection methodology
+Data-source documentation
+GitHub repository link
+Clear sample-data labels
+Public pages must not include:
+Private league information
+Private rankings
+Imported expert files
+User OAuth data
+Saved drafts
+Private trade evaluations
+Secrets
+Private experience
+Create:
+Authenticated dashboard
+League configuration
+Linked Sleeper leagues
+Manual ESPN league profiles
+Saved scoring profiles
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+41
+--- PAGE 42 ---
+Private expert imports
+Saved rankings
+Saved draft sessions
+Saved queues
+Saved trade evaluations
+Personal settings
+Data refresh status
+Authorization requirements
+Every private database operation must verify the authorized user server-side.
+Do not trust user IDs submitted by the browser .
+All private records should belong to an authenticated user identifier .
+Demo fixtures
+Use a dedicated fixture-loading process.
+Fixtures must be:
+Synthetic or legally reusable
+Clearly labeled
+Separated from production user data
+Safe to include publicly
+Stop after public and private surfaces are clearly separated and tested.
+Prompt 18 — ESPN companion architecture
+Using the shared project context, design the optional experimental ESPN browser companion.
+Do not automatically publish or distribute the extension.
+Do not implement credential extraction.
+Purpose
+The companion may observe the ESPN draft interface already open in the user's browser and emit
+normalized draft-pick events to the fantasy platform.
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+42
+--- PAGE 43 ---
+Safety and privacy requirements
+The companion must not:
+Read passwords
+Read unrelated cookies
+Export ESPN session cookies
+Collect browsing history
+Monitor unrelated websites
+Inject automated draft selections
+Submit transactions
+Store ESPN credentials
+transmit unrelated page content
+Architecture
+Design:
+Restricted host permissions
+Content script boundary
+DOM observer
+Player-name resolver
+Pick-event normalizer
+Local validation
+User-visible connection status
+Manual confirmation for uncertain matches
+Secure communication with the private application
+Duplicate-event handling
+Version compatibility checks
+Emergency disable control
+Core separation
+The companion must communicate through the same draft-source contract used by:
+Sleeper
+Manual entry
+Draft fixtures
+The DraftRoom module must not contain ESPN-specific DOM logic.
+Failure behavior
+If ESPN changes its page structure:
+Display a clear unsupported-state warning
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+43
+--- PAGE 44 ---
+Stop emitting events
+Preserve manual draft mode
+Never guess uncertain picks silently
+Create architecture documentation, threat modeling, and fixtures before implementing live page
+observation.
+Stop after the architecture, security analysis, and event contract are complete.
+Prompt 19 — Deployment, CI, observability, and
+recovery
+Using the shared project context, prepare a production-ready personal release.
+Vercel deployment
+Configure:
+Next.js deployment
+Server-side environment variables
+Preview environments
+Production environment
+Public and private routes
+Secure response headers
+Error handling
+Health-check route
+Neon deployment
+Configure:
+Production database
+Preview database strategy
+Migration workflow
+Connection pooling
+Backup documentation
+Restore documentation
+Least-privilege connection roles where practical
+Do not expose DATABASE_URL to the browser .
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+44
+--- PAGE 45 ---
+GitHub Actions
+Create workflows for:
+Pull-request validation
+Linting
+Type checking
+TypeScript tests
+Python tests
+Playwright tests
+Production build
+Migration validation
+Scheduled historical-data ingestion
+Scheduled ADP ingestion
+Scheduled news ingestion
+Projection generation
+Dependency and secret scanning
+Observability
+Add:
+Structured server logs
+Ingestion job logs
+Provider failure logs
+Model-run metadata
+Draft synchronization status
+Data-health dashboard
+User-safe errors
+Correlation IDs where useful
+Do not log:
+OAuth tokens
+Session cookies
+Database credentials
+Private import contents
+ESPN credentials
+Full private league payloads unnecessarily
+Recovery
+Document:
+Restoring the database
+Reprocessing historical data
+Rebuilding projections
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+45
+--- PAGE 46 ---
+Recovering draft state from append-only events
+Disabling a failing provider
+Rotating credentials
+Removing private imports
+Recreating public demo fixtures
+Final validation
+Verify:
+Public demo works while signed out
+Private routes reject signed-out users
+Unauthorized GitHub users are rejected
+Authorized user can access private features
+Private data never enters public responses
+Migrations run successfully
+The application deploys to Vercel
+Neon connections work
+Scheduled jobs preserve the last valid data
+Draft event replay is deterministic
+No secrets exist in Git history
+Mobile draft workflows work
+Incomplete integrations are labeled honestly
+Stop after a deployable release candidate is produced.
+Suggested implementation order
+Complete the prompts in this order:
+Foundation
+Repository and architecture foundation
+Canonical domain and scoring engine
+Database schema and repositories
+Authentication and private authorization
+Data catalog and ingestion framework
+Player analysis
+Historical player data
+Custom projection engine
+Expert imports and ADP
+Ranking engine
+Player intelligence interface
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+1. 
+2. 
+3. 
+4. 
+5. 
+1. 
+2. 
+3. 
+4. 
+5. 
+46
+--- PAGE 47 ---
+League and draft tools
+League gateway
+Draft event engine
+Draft recommendation engine
+Trade engine
+Content and product completion
+News intelligence
+Draft guide
+Public demo and private workspace
+ESPN companion architecture
+Deployment, observability, and recovery
+Initial portfolio milestone
+The first strong portfolio release should include Prompts 1 through 10.
+That release would demonstrate:
+Modular software architecture
+PostgreSQL database design
+Authentication
+Data ingestion
+Statistical modeling
+Configurable fantasy scoring
+Expert and model comparison
+Rankings and tiers
+Data provenance
+Responsive player research tools
+League linking, draft synchronization, trades, news, and the ESPN companion can then be added
+incrementally without destabilizing the foundation.
+1. 
+2. 
+3. 
+4. 
+1. 
+2. 
+3. 
+4. 
+5. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+47
