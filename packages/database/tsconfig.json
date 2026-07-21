@@ -1,4 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@fantasyfb/contracts": ["../contracts/src/index.ts"]
+    }
+  },
   "include": ["src/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts"]
 }

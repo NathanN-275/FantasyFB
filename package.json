@@ -19,8 +19,8 @@
     "test:python": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest pipelines; else python3 -m pytest pipelines; fi",
     "test:e2e": "pnpm --filter @fantasyfb/web exec playwright test",
     "boundaries": "node scripts/validate-import-boundaries.mjs",
-    "db:generate": "pnpm --filter @fantasyfb/database drizzle-kit generate",
-    "db:migrate": "pnpm --filter @fantasyfb/database drizzle-kit migrate",
+    "db:generate": "pnpm --filter @fantasyfb/database exec drizzle-kit generate",
+    "db:migrate": "pnpm --filter @fantasyfb/database db:migrate",
     "db:validate": "pnpm --filter @fantasyfb/database db:validate",
     "db:seed": "pnpm --filter @fantasyfb/database db:seed",
     "db:test:reset": "pnpm --filter @fantasyfb/database db:test:reset"

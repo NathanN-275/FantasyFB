@@ -18,3 +18,5 @@ export interface DataProvenance {
   datasetVersion: string;
   licenseOrUsageNote?: string;
 }
+
+export * from "./repositories.js";
