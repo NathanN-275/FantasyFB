@@ -47,6 +47,16 @@ export interface ImportRepository {
   list(context: AuthorizationContext): Promise<PrivateImportRecord[]>;
 }
 
+/**
+ * Persistence boundary for provenance and ingestion health. Provider adapters and
+ * pipelines use this instead of depending on a particular database client.
+ */
+export interface DataCatalogRepository {
+  upsertDataset(record: DatasetCatalogRecord): Promise<DatasetCatalogRecord>;
+  findLastValid(input: DatasetIdentity): Promise<DatasetCatalogRecord | undefined>;
+  recordIngestionRun(run: IngestionRunRecord): Promise<void>;
+}
+
 export interface PlayerRecord {
   readonly id: string;
   readonly fullName: string;
@@ -138,4 +148,34 @@ export interface PrivateImportRecord {
   readonly id: string;
   readonly fileName: string;
   readonly status: "pending" | "processing" | "completed" | "failed" | "quarantined";
+}
+
+export interface DatasetIdentity {
+  readonly source: string;
+  readonly sourceIdentifier: string;
+  readonly season?: number;
+  readonly week?: number;
+}
+
+export interface DatasetCatalogRecord extends DatasetIdentity {
+  readonly datasetId: string;
+  readonly retrievedAt: Date;
+  readonly effectiveAt?: Date;
+  readonly datasetVersion: string;
+  readonly licenseOrUsageNote: string;
+  readonly recordCount: number;
+  readonly validationStatus: "valid" | "invalid" | "quarantined";
+  readonly freshnessStatus: "fresh" | "stale" | "unknown";
+  readonly importStatus: "completed" | "failed" | "quarantined";
+  readonly errorStatus?: string;
+  readonly lastKnownSuccessfulUpdate?: Date;
+}
+
+export interface IngestionRunRecord {
+  readonly idempotencyKey: string;
+  readonly source: string;
+  readonly startedAt: Date;
+  readonly completedAt: Date;
+  readonly status: "completed" | "failed" | "quarantined";
+  readonly report: Readonly<Record<string, unknown>>;
 }

@@ -20,3 +20,4 @@ export interface DataProvenance {
 }
 
 export * from "./repositories.js";
+export * from "./providers.js";

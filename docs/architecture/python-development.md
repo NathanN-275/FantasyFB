@@ -9,4 +9,4 @@ python3 -m venv .venv
 .venv/bin/python -m pytest pipelines
 ```
 
-Python pipelines may access infrastructure through narrow, validated contracts. They must not expose provider response shapes to TypeScript domain modules. Prompt 5 will add `nflreadpy` to the historical-data pipeline after its dataset licensing review.
+Python pipelines may access infrastructure through narrow, validated contracts. They must not expose provider response shapes to TypeScript domain modules. The historical-data pipeline uses `nflreadpy` only for the reviewed nflverse weekly player-statistics dataset; see its dataset-specific licensing and attribution review before enabling any other loader.

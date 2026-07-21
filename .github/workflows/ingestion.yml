@@ -2,14 +2,38 @@ name: Scheduled ingestion
 
 on:
   workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Space-separated NFL seasons to ingest"
+        required: false
+        default: "2025"
   schedule:
-    - cron: "17 12 * * *"
+    - cron: "17 12 * * 2"
 
 permissions:
   contents: read
 
 jobs:
-  placeholder:
+  historical-data:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SEASONS: ${{ inputs.seasons || '2025' }}
     steps:
-      - run: echo "Ingestion providers are intentionally introduced in Prompt 5 and Prompt 8."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r pipelines/requirements.txt
+      - name: Ingest reviewed nflverse player statistics
+        shell: bash
+        run: |
+          set -o pipefail
+          python pipelines/historical-data/run_ingestion.py --seasons $SEASONS | tee ingestion-report.json
+      - name: Upload ingestion report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-data-ingestion-report
+          path: ingestion-report.json
+          if-no-files-found: warn

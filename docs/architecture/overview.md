@@ -16,6 +16,10 @@ The `pnpm boundaries` command rejects imports into another workspace's `src` or 
 
 ## Planned data-provider families
 
-Prompt 5 will implement `HistoricalDataProvider` with `NflverseHistoricalDataProvider`. It will use `nflreadpy`, normalize all records, review each enabled dataset's license and attribution, and preserve the last valid dataset on failure.
+`HistoricalDataProvider` is implemented by `NflverseHistoricalDataProvider`. It uses
+`nflreadpy` for the reviewed nflverse weekly player-statistics dataset, normalizes
+records behind provider contracts, stores provenance and health, and preserves the
+last valid dataset on failure. See the source review in
+[`docs/data-sources/nflverse-historical-player-stats.md`](../data-sources/nflverse-historical-player-stats.md).
 
 Prompt 8 will implement `AdpProvider` with `FantasyFootballCalculatorAdpProvider`, `PrivateCsvAdpProvider`, and `NoAdpProvider`. Automated ADP snapshots will run no more than daily unless documented provider limits permit otherwise.
