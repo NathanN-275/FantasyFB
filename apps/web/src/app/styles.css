@@ -22,3 +22,34 @@ main {
 a {
   color: #80ddba;
 }
+
+button {
+  border: 1px solid #80ddba;
+  border-radius: 0.35rem;
+  background: #0e2922;
+  color: #f2f6f5;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.65rem 0.9rem;
+}
+
+button:hover {
+  background: #164135;
+}
+
+section {
+  border: 1px solid #2d5649;
+  border-radius: 0.5rem;
+  margin: 2rem 0;
+  padding: 1rem 1.25rem;
+}
+
+dt {
+  color: #80ddba;
+  font-weight: 700;
+  margin-top: 0.85rem;
+}
+
+dd {
+  margin: 0.2rem 0 0;
+}

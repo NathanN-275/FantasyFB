@@ -11,10 +11,12 @@
     "db:validate": "node -e \"process.exit(0)\""
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.6.23",
     "@fantasyfb/authentication": "workspace:*",
     "@fantasyfb/contracts": "workspace:*",
     "@fantasyfb/database": "workspace:*",
     "@fantasyfb/ui": "workspace:*",
+    "better-auth": "^1.6.23",
     "next": "^15.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

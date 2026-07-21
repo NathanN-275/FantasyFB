@@ -6,7 +6,7 @@
 
 Public football records use `public` visibility; portfolio fixtures use `sample`; data originating from a user's imports, leagues, rankings, projections, drafts, queues, saved players, or trade evaluations is private. Private data has an owning `user_accounts` row. `createRepositories` requires an `AuthorizationContext` for every private query and filters every private ownership query by that immutable account id.
 
-The application must still verify an authenticated identity before constructing this context. This schema reserves `authorized_user_identities` for immutable provider account IDs; Prompt 4 will connect it to the selected OAuth provider.
+The application must still verify an authenticated identity before constructing this context. `authorized_user_identities` stores immutable provider account IDs, and `auth_sessions` stores the server-side sessions created by Better Auth. Private authorization compares the GitHub provider account ID to configuration; it does not use email, display name, or GitHub username.
 
 ## Versioning and identity
 
@@ -16,6 +16,6 @@ Players have canonical UUIDs. `player_external_ids` provides a unique `(provider
 
 ## Drafts and limitations
 
-Draft state is append-only: each event has a per-draft sequence and idempotency key, both database-enforced unique. The repository verifies draft ownership before reading or appending events. State reduction, provider polling, Auth.js/Better Auth integration, and live synchronization belong to later prompts.
+Draft state is append-only: each event has a per-draft sequence and idempotency key, both database-enforced unique. The repository verifies draft ownership before reading or appending events. State reduction, provider polling, and live synchronization belong to later prompts.
 
 `pnpm db:test:reset` is intentionally destructive only to `TEST_DATABASE_URL`; it refuses to run if that URL equals `DATABASE_URL`. A migration-execution integration test is skipped unless the same isolated test URL is configured.

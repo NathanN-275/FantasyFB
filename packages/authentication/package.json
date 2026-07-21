@@ -8,11 +8,14 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node -e \"process.exit(0)\""
+    "test": "vitest run"
   },
   "dependencies": {
     "@fantasyfb/contracts": "workspace:*",
     "next": "^15.3.0",
     "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
   }
 }

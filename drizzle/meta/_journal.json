@@ -15,6 +15,13 @@
       "when": 1784599799822,
       "tag": "0001_brief_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784600953038,
+      "tag": "0002_authentication_sessions",
+      "breakpoints": true
     }
   ]
 }

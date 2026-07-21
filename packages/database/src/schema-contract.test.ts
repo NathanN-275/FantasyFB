@@ -5,7 +5,11 @@ import { describe, expect, it } from "vitest";
 const migrationDirectory = new URL("../../../drizzle/", import.meta.url);
 
 async function migrationSql() {
-  const files = ["0000_spotty_exodus.sql", "0001_brief_bloodstrike.sql"];
+  const files = [
+    "0000_spotty_exodus.sql",
+    "0001_brief_bloodstrike.sql",
+    "0002_authentication_sessions.sql"
+  ];
   return Promise.all(
     files.map((file) => readFile(fileURLToPath(new URL(file, migrationDirectory)), "utf8"))
   ).then((contents) => contents.join("\n"));
@@ -42,7 +46,8 @@ describe("initial database migrations", () => {
       "player_news",
       "private_data_imports",
       "user_accounts",
-      "authorized_user_identities"
+      "authorized_user_identities",
+      "auth_sessions"
     ]) {
       expect(sql).toContain(`CREATE TABLE "${table}"`);
     }
@@ -56,6 +61,7 @@ describe("initial database migrations", () => {
     expect(sql).toContain("dataset_versions_private_owner_required");
     expect(sql).toContain("draft_events_draft_sequence_unique");
     expect(sql).toContain("draft_events_draft_idempotency_unique");
+    expect(sql).toContain("auth_sessions_token_unique");
     expect(sql).toContain('REFERENCES "public"."players"');
     expect(sql).toContain('REFERENCES "public"."user_accounts"');
   });

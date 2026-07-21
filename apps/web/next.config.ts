@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
     "@fantasyfb/database",
     "@fantasyfb/ui"
   ],
+  webpack(config) {
+    config.resolve.extensionAlias = {
+      ...config.resolve.extensionAlias,
+      ".js": [".ts", ".tsx", ".js"]
+    };
+    return config;
+  },
   poweredByHeader: false
 };
 

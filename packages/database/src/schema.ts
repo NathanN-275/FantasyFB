@@ -79,6 +79,8 @@ export const userAccounts = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     displayName: text("display_name"),
     email: text("email"),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    image: text("image"),
     createdAt,
     updatedAt
   },
@@ -94,6 +96,13 @@ export const authorizedUserIdentities = pgTable(
       .references(() => userAccounts.id, { onDelete: "cascade" }),
     provider: text("provider").notNull(),
     providerAccountId: text("provider_account_id").notNull(),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: text("scope"),
+    password: text("password"),
     isAuthorized: boolean("is_authorized").notNull().default(false),
     createdAt,
     updatedAt
@@ -103,6 +112,27 @@ export const authorizedUserIdentities = pgTable(
       table.provider,
       table.providerAccountId
     )
+  ]
+);
+
+/** Server-side sessions for the Better Auth adapter. */
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    token: text("token").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => userAccounts.id, { onDelete: "cascade" }),
+    createdAt,
+    updatedAt
+  },
+  (table) => [
+    unique("auth_sessions_token_unique").on(table.token),
+    index("auth_sessions_user_id_index").on(table.userId)
   ]
 );
 

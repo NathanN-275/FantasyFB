@@ -1,17 +1,35 @@
-import "server-only";
-import { redirect } from "next/navigation";
 import type { UserId } from "@fantasyfb/contracts";
 
 export interface AuthorizedUser {
   id: UserId;
   providerAccountId: string;
+  displayName: string | null;
+  email: string | null;
 }
 
-/** Authentication boundary; Prompt 4 will provide the Auth.js or Better Auth adapter. */
+export type AuthenticationState =
+  | { status: "signed-out" }
+  | { status: "unauthorized"; providerAccountId: string | null }
+  | { status: "authorized"; user: AuthorizedUser };
+
+/** Replaceable authentication boundary implemented by the selected OAuth/session adapter. */
 export interface AuthProvider {
+  getAuthenticationState(): Promise<AuthenticationState>;
   getAuthorizedUser(): Promise<AuthorizedUser | null>;
 }
 
-export async function requireAuthorizedUser(): Promise<AuthorizedUser> {
-  redirect("/");
+export function parseGitHubUserIdAllowlist(value: string): ReadonlySet<string> {
+  return new Set(
+    value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  );
+}
+
+export function isAuthorizedGitHubUser(
+  providerAccountId: string | null,
+  allowedGitHubUserIds: ReadonlySet<string>
+): boolean {
+  return providerAccountId !== null && allowedGitHubUserIds.has(providerAccountId);
 }
