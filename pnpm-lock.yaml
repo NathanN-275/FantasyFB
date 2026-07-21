@@ -82,7 +82,18 @@ importers:
 
   modules/draft-room: {}
 
-  modules/fantasy-core: {}
+  modules/fantasy-core:
+    dependencies:
+      '@fantasyfb/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/league-gateway: {}
 
