@@ -10,7 +10,7 @@ The application must still verify an authenticated identity before constructing 
 
 ## Versioning and identity
 
-`data_sources` and `dataset_versions` preserve retrieval, effective timestamp, usage note, validation, freshness, and record count. Dataset versions are unique per public source/version or per private owner/source/version. Projection and ranking output belongs to explicit runs tied to a dataset version, season, kind, visibility, and version metadata.
+`data_sources` and `dataset_versions` preserve retrieval, effective timestamp, usage note, validation, freshness, and record count. Dataset versions are unique per public source/version or per private owner/source/version. Projection and ranking output belongs to explicit runs tied to a dataset version, season, kind, visibility, and version metadata. Model projection runs also retain the scoring configuration identifier, training season range, and backtest/calibration metrics. Player outputs retain projected games, statistics, total and per-game points, uncertainty bounds, and confidence.
 
 Players have canonical UUIDs. `player_external_ids` provides a unique `(provider, external_id)` mapping; provider IDs are never canonical primary keys. Weekly and seasonal statistics retain a source dataset version and NFL team, so a traded player's season can contain multiple team rows.
 

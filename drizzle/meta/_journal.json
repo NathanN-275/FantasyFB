@@ -29,6 +29,13 @@
       "when": 1784602746967,
       "tag": "0003_organic_leo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784858458318,
+      "tag": "0004_projection-engine-v1",
+      "breakpoints": true
     }
   ]
 }

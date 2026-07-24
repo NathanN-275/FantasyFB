@@ -131,8 +131,20 @@ export interface HistoricalSeasonStatisticRecord {
 
 export interface ProjectionRecord {
   readonly playerId: string;
+  readonly seasonId: string;
+  readonly projectedGames: string | null;
+  readonly projectedStatistics: Readonly<Record<string, number>>;
   readonly projectedPoints: string | null;
+  readonly projectedPointsPerGame: string | null;
+  readonly floorPoints: string | null;
+  readonly medianPoints: string | null;
+  readonly ceilingPoints: string | null;
+  readonly confidence: string | null;
   readonly projectionKind: "model" | "expert" | "hybrid";
+  readonly modelVersion: string | null;
+  readonly featureVersion: string | null;
+  readonly scoringConfigurationIdentifier: string | null;
+  readonly generatedAt: Date;
 }
 
 export interface RankingRecord {

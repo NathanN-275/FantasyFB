@@ -400,6 +400,10 @@ export const projectionRuns = pgTable(
     projectionKind: projectionKind("projection_kind").notNull(),
     modelVersion: text("model_version"),
     featureVersion: text("feature_version"),
+    scoringConfigurationIdentifier: text("scoring_configuration_identifier"),
+    trainingStartSeason: integer("training_start_season"),
+    trainingEndSeason: integer("training_end_season"),
+    metrics: jsonb("metrics").notNull().default({}),
     generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
     createdAt
   },
@@ -422,8 +426,10 @@ export const playerProjections = pgTable(
     playerId: uuid("player_id")
       .notNull()
       .references(() => players.id, { onDelete: "cascade" }),
+    projectedGames: decimal("projected_games"),
     projectedStats: jsonb("projected_stats").notNull(),
     projectedPoints: decimal("projected_points"),
+    projectedPointsPerGame: decimal("projected_points_per_game"),
     floorPoints: decimal("floor_points"),
     medianPoints: decimal("median_points"),
     ceilingPoints: decimal("ceiling_points"),

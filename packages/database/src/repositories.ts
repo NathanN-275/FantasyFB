@@ -290,12 +290,30 @@ export function createRepositories(database: Database): {
       return database
         .select({
           playerId: playerProjections.playerId,
+          seasonId: projectionRuns.seasonId,
+          projectedGames: playerProjections.projectedGames,
+          projectedStatistics: playerProjections.projectedStats,
           projectedPoints: playerProjections.projectedPoints,
-          projectionKind: projectionRuns.projectionKind
+          projectedPointsPerGame: playerProjections.projectedPointsPerGame,
+          floorPoints: playerProjections.floorPoints,
+          medianPoints: playerProjections.medianPoints,
+          ceilingPoints: playerProjections.ceilingPoints,
+          confidence: playerProjections.confidence,
+          projectionKind: projectionRuns.projectionKind,
+          modelVersion: projectionRuns.modelVersion,
+          featureVersion: projectionRuns.featureVersion,
+          scoringConfigurationIdentifier: projectionRuns.scoringConfigurationIdentifier,
+          generatedAt: projectionRuns.generatedAt
         })
         .from(playerProjections)
         .innerJoin(projectionRuns, eq(playerProjections.projectionRunId, projectionRuns.id))
-        .where(and(eq(projectionRuns.seasonId, query.seasonId), visibility));
+        .where(and(eq(projectionRuns.seasonId, query.seasonId), visibility))
+        .then((records) =>
+          records.map((record) => ({
+            ...record,
+            projectedStatistics: numericStatisticValues(record.projectedStatistics)
+          }))
+        );
     }
   };
 

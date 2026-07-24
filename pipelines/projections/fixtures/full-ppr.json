@@ -1,0 +1,19 @@
+{
+  "identifier": "full-ppr-v1",
+  "stat_points": {
+    "passing_yards": 0.04,
+    "passing_touchdowns": 4,
+    "interceptions": -2,
+    "rushing_yards": 0.1,
+    "rushing_touchdowns": 6,
+    "receptions": 1,
+    "receiving_yards": 0.1,
+    "receiving_touchdowns": 6,
+    "field_goals_made": 3,
+    "extra_points_made": 1,
+    "defensive_sacks": 1,
+    "defensive_interceptions": 2,
+    "defensive_fumble_recoveries": 2,
+    "defensive_touchdowns": 6
+  }
+}
