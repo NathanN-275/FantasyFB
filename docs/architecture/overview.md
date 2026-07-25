@@ -23,4 +23,7 @@ and preserves the last valid dataset on failure. `@fantasyfb/historical-data` is
 single application-facing module for retrieving those persisted aggregates. See the source review in
 [`docs/data-sources/nflverse-historical-player-stats.md`](../data-sources/nflverse-historical-player-stats.md).
 
-Prompt 8 will implement `AdpProvider` with `FantasyFootballCalculatorAdpProvider`, `PrivateCsvAdpProvider`, and `NoAdpProvider`. Automated ADP snapshots will run no more than daily unless documented provider limits permit otherwise.
+Expert projections and rankings now enter through credential-gated authorized APIs or authenticated
+private CSV previews. ADP uses `FantasyFootballCalculatorAdpProvider`; each retrieval creates a new
+versioned snapshot and should run no more than daily. Missing providers are represented explicitly,
+so model outputs continue without fabricated expert values.

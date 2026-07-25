@@ -37,6 +37,11 @@ button:hover {
   background: #164135;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 section {
   border: 1px solid #2d5649;
   border-radius: 0.5rem;
@@ -52,4 +57,126 @@ dt {
 
 dd {
   margin: 0.2rem 0 0;
+}
+
+.eyebrow {
+  color: #80ddba;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.status-list {
+  line-height: 1.8;
+}
+
+.import-form {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.import-form label,
+.import-form fieldset {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.import-form fieldset {
+  border: 1px solid #2d5649;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 1rem;
+}
+
+.import-form legend {
+  color: #80ddba;
+  font-weight: 700;
+  padding: 0 0.4rem;
+}
+
+input,
+select {
+  border: 1px solid #477667;
+  border-radius: 0.35rem;
+  background: #0a1b17;
+  color: #f2f6f5;
+  font: inherit;
+  min-width: 0;
+  padding: 0.65rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #f7d36c;
+  outline-offset: 2px;
+}
+
+.checkbox-label {
+  align-items: center;
+  display: flex !important;
+  grid-column: 1 / -1;
+}
+
+.checkbox-label input {
+  min-width: auto;
+}
+
+.preview {
+  margin-top: 1.5rem;
+}
+
+.table-scroll {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  min-width: 720px;
+  width: 100%;
+}
+
+caption {
+  font-weight: 700;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+th,
+td {
+  border-bottom: 1px solid #2d5649;
+  padding: 0.65rem;
+  text-align: left;
+}
+
+th {
+  color: #80ddba;
+}
+
+.attribution {
+  color: #b8c7c2;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 2rem 1rem;
+  }
+
+  .import-form,
+  .import-form fieldset {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
 }

@@ -1,6 +1,9 @@
-import { and, asc, eq, sql, type InferSelectModel, type SQL } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, asc, desc, eq, sql, type InferSelectModel, type SQL } from "drizzle-orm";
 import type {
+  AdpRepository,
   AuthorizationContext,
+  ConfirmedExpertImportRecord,
   DraftEventRecord,
   DraftRepository,
   HistoricalStatisticsRepository,
@@ -11,6 +14,7 @@ import type {
   PlayerRecord,
   ProjectionRepository,
   RankingRepository,
+  NewExpertImportRowRecord,
   StatsRepository,
   TradeRepository,
   VisiblePlayerQuery,
@@ -18,12 +22,16 @@ import type {
 } from "@fantasyfb/contracts";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import {
+  adpSnapshots,
+  dataSources,
   dataVisibility,
   datasetVersions,
   draftEvents,
   drafts,
+  expertImportRows,
   leagueConfigurations,
   newsRecords,
+  nflTeams,
   playerExternalIds,
   playerNews,
   playerProjections,
@@ -32,6 +40,7 @@ import {
   privateDataImports,
   projectionRuns,
   rankingRuns,
+  seasons,
   seasonStatistics,
   teamSeasonStatistics,
   teamWeeklyStatistics,
@@ -87,6 +96,7 @@ export function createRepositories(database: Database): {
   tradeRepository: TradeRepository;
   newsRepository: NewsRepository;
   importRepository: ImportRepository;
+  adpRepository: AdpRepository;
 } {
   const playerRepository: PlayerRepository = {
     async findById(playerId) {
@@ -120,6 +130,48 @@ export function createRepositories(database: Database): {
         )
         .limit(1);
       return player;
+    },
+    async listResolutionCandidates() {
+      const records = await database
+        .select({
+          id: players.id,
+          fullName: players.fullName,
+          position: players.position,
+          team: nflTeams.abbreviation,
+          externalProvider: playerExternalIds.provider,
+          externalValue: playerExternalIds.externalId
+        })
+        .from(players)
+        .leftJoin(nflTeams, eq(players.teamId, nflTeams.id))
+        .leftJoin(playerExternalIds, eq(players.id, playerExternalIds.playerId))
+        .orderBy(asc(players.fullName));
+      const candidates = new Map<
+        string,
+        {
+          id: string;
+          fullName: string;
+          position: string;
+          team?: string;
+          externalIds: { provider: string; value: string }[];
+        }
+      >();
+      for (const record of records) {
+        const candidate = candidates.get(record.id) ?? {
+          id: record.id,
+          fullName: record.fullName,
+          position: record.position,
+          ...(record.team ? { team: record.team } : {}),
+          externalIds: []
+        };
+        if (record.externalProvider && record.externalValue) {
+          candidate.externalIds.push({
+            provider: record.externalProvider,
+            value: record.externalValue
+          });
+        }
+        candidates.set(record.id, candidate);
+      }
+      return [...candidates.values()];
     },
     async upsert(record) {
       const [player] = await database
@@ -458,6 +510,389 @@ export function createRepositories(database: Database): {
         })
         .from(privateDataImports)
         .where(eq(privateDataImports.ownerUserId, context.userId));
+    },
+    async stageExpertImport(context, input) {
+      const summary = summarizeImportRows(input.rows);
+      const season = await ensureSeason(database, input.seasonYear);
+      const importId = randomUUID();
+      const importValues = {
+        id: importId,
+        ownerUserId: context.userId,
+        seasonId: season.id,
+        providerName: input.providerName,
+        importKind: input.importKind,
+        importProfile: input.importProfile,
+        fileName: input.fileName,
+        contentType: input.contentType,
+        checksum: input.checksum,
+        status: "awaiting_confirmation" as const,
+        recordCount: input.rows.length,
+        preserveOriginal: input.preserveOriginal,
+        ...(input.originalContent ? { originalContent: input.originalContent } : {}),
+        previewSummary: summary
+      };
+      if (input.rows.length) {
+        await database.batch([
+          database.insert(privateDataImports).values(importValues),
+          database.insert(expertImportRows).values(
+            input.rows.map((row) => ({
+              importId,
+              rowNumber: row.rowNumber,
+              resolution: row.resolution,
+              ...(row.playerId ? { playerId: row.playerId } : {}),
+              candidatePlayerIds: [...row.candidatePlayerIds],
+              sourceIdentity: row.sourceIdentity,
+              ...(row.normalizedProjection
+                ? { normalizedProjection: row.normalizedProjection }
+                : {}),
+              ...(row.normalizedRanking ? { normalizedRanking: row.normalizedRanking } : {}),
+              errors: [...row.errors]
+            }))
+          )
+        ]);
+      } else {
+        await database.insert(privateDataImports).values(importValues);
+      }
+      return {
+        id: importId,
+        fileName: input.fileName,
+        status: "awaiting_confirmation",
+        seasonYear: input.seasonYear,
+        providerName: input.providerName,
+        importKind: input.importKind,
+        ...summary,
+        rows: input.rows
+      };
+    },
+    async findExpertImport(context, importId) {
+      const [dataImport] = await database
+        .select({
+          id: privateDataImports.id,
+          fileName: privateDataImports.fileName,
+          status: privateDataImports.status,
+          providerName: privateDataImports.providerName,
+          importKind: privateDataImports.importKind,
+          seasonYear: seasons.year
+        })
+        .from(privateDataImports)
+        .innerJoin(seasons, eq(privateDataImports.seasonId, seasons.id))
+        .where(
+          and(
+            eq(privateDataImports.id, importId),
+            eq(privateDataImports.ownerUserId, context.userId)
+          )
+        )
+        .limit(1);
+      if (!dataImport || !dataImport.providerName || !dataImport.importKind) return undefined;
+      const rows = await listExpertImportRows(database, importId);
+      return {
+        id: dataImport.id,
+        fileName: dataImport.fileName,
+        status: dataImport.status,
+        seasonYear: dataImport.seasonYear,
+        providerName: dataImport.providerName,
+        importKind: dataImport.importKind,
+        ...summarizeImportRows(rows),
+        rows
+      };
+    },
+    async confirmExpertImport(context, importId) {
+      const [dataImport] = await database
+        .select({
+          id: privateDataImports.id,
+          fileName: privateDataImports.fileName,
+          status: privateDataImports.status,
+          providerName: privateDataImports.providerName,
+          importKind: privateDataImports.importKind,
+          checksum: privateDataImports.checksum,
+          preserveOriginal: privateDataImports.preserveOriginal,
+          seasonId: privateDataImports.seasonId,
+          seasonYear: seasons.year
+        })
+        .from(privateDataImports)
+        .innerJoin(seasons, eq(privateDataImports.seasonId, seasons.id))
+        .where(
+          and(
+            eq(privateDataImports.id, importId),
+            eq(privateDataImports.ownerUserId, context.userId)
+          )
+        )
+        .limit(1);
+      if (
+        !dataImport ||
+        !dataImport.providerName ||
+        !dataImport.importKind ||
+        !dataImport.seasonId
+      ) {
+        throw new Error("Expert import was not found for the authorized user.");
+      }
+      if (dataImport.status !== "awaiting_confirmation") {
+        throw new Error(`Expert import cannot be confirmed from status ${dataImport.status}.`);
+      }
+      const rows = await listExpertImportRows(database, importId);
+      const matched = rows.filter(
+        (row): row is typeof row & { playerId: string } =>
+          row.resolution === "matched" && Boolean(row.playerId)
+      );
+      assertUniqueImportedRanks(matched);
+      const now = new Date();
+      const [source] = await database
+        .insert(dataSources)
+        .values({
+          name: dataImport.providerName,
+          sourceIdentifier: `private-expert:${dataImport.providerName}`,
+          licenseOrUsageNote: "Private user-authorized expert import; not for redistribution."
+        })
+        .onConflictDoUpdate({
+          target: [dataSources.name, dataSources.sourceIdentifier],
+          set: { updatedAt: sql`now()` }
+        })
+        .returning({ id: dataSources.id });
+      if (!source) throw new Error("Expert import source could not be persisted.");
+
+      const datasetId = randomUUID();
+      const projectionRunId = randomUUID();
+      const rankingRunId = randomUUID();
+      const datasetValues = {
+        id: datasetId,
+        dataSourceId: source.id,
+        importId,
+        ownerUserId: context.userId,
+        visibility: "private" as const,
+        version: `private-${importId}`,
+        seasonYear: dataImport.seasonYear,
+        retrievedAt: now,
+        validationStatus: "valid" as const,
+        freshnessStatus: "valid" as const,
+        recordCount: matched.length,
+        licenseOrUsageNote: "Private user-authorized expert import; not for redistribution."
+      };
+      const projectionRows = matched.filter((row) => row.normalizedProjection);
+      const projectionValues = projectionRows.map((row) => {
+        const projection = normalizedProjectionValues(row.normalizedProjection!);
+        return {
+          projectionRunId,
+          playerId: row.playerId,
+          projectedStats: projection.statistics,
+          ...optionalDecimal("projectedGames", projection.projectedGames),
+          ...optionalDecimal("projectedPoints", projection.projectedPoints),
+          ...optionalDecimal("projectedPointsPerGame", projection.projectedPointsPerGame),
+          ...optionalDecimal("floorPoints", projection.floorPoints),
+          ...optionalDecimal("medianPoints", projection.medianPoints),
+          ...optionalDecimal("ceilingPoints", projection.ceilingPoints),
+          ...optionalDecimal("confidence", projection.confidence)
+        };
+      });
+      const rankingRows = matched.filter((row) => row.normalizedRanking);
+      const rankingValues = rankingRows.map((row) => {
+        const ranking = normalizedRankingValues(row.normalizedRanking!);
+        return {
+          rankingRunId,
+          playerId: row.playerId,
+          rank: ranking.overallRank,
+          rationale: {
+            provider: dataImport.providerName,
+            ...(ranking.positionRank === undefined ? {} : { positionRank: ranking.positionRank })
+          }
+        };
+      });
+      const projectionRunValues = {
+        id: projectionRunId,
+        datasetVersionId: datasetId,
+        importId,
+        ownerUserId: context.userId,
+        visibility: "private" as const,
+        seasonId: dataImport.seasonId,
+        projectionKind: "expert" as const,
+        generatedAt: now,
+        metrics: { provider: dataImport.providerName, importId }
+      };
+      const rankingRunValues = {
+        id: rankingRunId,
+        datasetVersionId: datasetId,
+        importId,
+        ownerUserId: context.userId,
+        visibility: "private" as const,
+        seasonId: dataImport.seasonId,
+        rankingKind: "expert" as const,
+        version: `private-${importId}`,
+        generatedAt: now
+      };
+      const completionValues = {
+        status: "completed" as const,
+        confirmedAt: now,
+        completedAt: now,
+        recordCount: matched.length,
+        ...(!dataImport.preserveOriginal ? { originalContent: null } : {})
+      };
+      const completeImport = database
+        .update(privateDataImports)
+        .set(completionValues)
+        .where(
+          and(
+            eq(privateDataImports.id, importId),
+            eq(privateDataImports.ownerUserId, context.userId),
+            eq(privateDataImports.status, "awaiting_confirmation")
+          )
+        );
+      if (projectionValues.length && rankingValues.length) {
+        await database.batch([
+          database.insert(datasetVersions).values(datasetValues),
+          database.insert(projectionRuns).values(projectionRunValues),
+          database.insert(playerProjections).values(projectionValues),
+          database.insert(rankingRuns).values(rankingRunValues),
+          database.insert(playerRankings).values(rankingValues),
+          completeImport
+        ]);
+      } else if (projectionValues.length) {
+        await database.batch([
+          database.insert(datasetVersions).values(datasetValues),
+          database.insert(projectionRuns).values(projectionRunValues),
+          database.insert(playerProjections).values(projectionValues),
+          completeImport
+        ]);
+      } else if (rankingValues.length) {
+        await database.batch([
+          database.insert(datasetVersions).values(datasetValues),
+          database.insert(rankingRuns).values(rankingRunValues),
+          database.insert(playerRankings).values(rankingValues),
+          completeImport
+        ]);
+      } else {
+        await database.batch([
+          database.insert(datasetVersions).values(datasetValues),
+          completeImport
+        ]);
+      }
+      const result: ConfirmedExpertImportRecord = {
+        id: dataImport.id,
+        fileName: dataImport.fileName,
+        status: "completed",
+        persistedProjectionCount: projectionRows.length,
+        persistedRankingCount: rankingRows.length,
+        skippedRowCount: rows.length - matched.length
+      };
+      return result;
+    }
+  };
+
+  const adpRepository: AdpRepository = {
+    async findLatestSnapshot(input) {
+      const [latest] = await database
+        .select({
+          datasetVersionId: adpSnapshots.datasetVersionId,
+          persistedRecordCount: datasetVersions.recordCount,
+          retrievedAt: adpSnapshots.capturedAt
+        })
+        .from(adpSnapshots)
+        .innerJoin(seasons, eq(adpSnapshots.seasonId, seasons.id))
+        .innerJoin(datasetVersions, eq(adpSnapshots.datasetVersionId, datasetVersions.id))
+        .where(
+          and(
+            eq(adpSnapshots.provider, input.provider),
+            eq(seasons.year, input.seasonYear),
+            eq(adpSnapshots.scoringFormat, input.scoringFormat),
+            eq(adpSnapshots.leagueSize, input.leagueSize)
+          )
+        )
+        .orderBy(desc(adpSnapshots.capturedAt))
+        .limit(1);
+      return latest;
+    },
+    async saveSnapshot(input) {
+      const season = await ensureSeason(database, input.seasonYear);
+      const [source] = await database
+        .insert(dataSources)
+        .values({
+          name: "Fantasy Football Calculator ADP",
+          sourceIdentifier: input.provider,
+          sourceUrl: "https://fantasyfootballcalculator.com/api/v1/adp",
+          licenseOrUsageNote:
+            "Free REST API use with requested attribution; data updates once daily."
+        })
+        .onConflictDoUpdate({
+          target: [dataSources.name, dataSources.sourceIdentifier],
+          set: {
+            sourceUrl: "https://fantasyfootballcalculator.com/api/v1/adp",
+            updatedAt: sql`now()`
+          }
+        })
+        .returning({ id: dataSources.id });
+      if (!source) throw new Error("ADP data source could not be persisted.");
+      const datasetId = randomUUID();
+      const version = `${input.retrievedAt.toISOString()}-${randomUUID()}`;
+      const datasetQuery = database.insert(datasetVersions).values({
+        id: datasetId,
+        dataSourceId: source.id,
+        visibility: "public",
+        version,
+        seasonYear: input.seasonYear,
+        retrievedAt: input.retrievedAt,
+        validationStatus: "valid",
+        freshnessStatus: "valid",
+        recordCount: input.records.length,
+        licenseOrUsageNote: "Fantasy Football Calculator REST API; attribution required."
+      });
+      if (input.records.length) {
+        await database.batch([
+          datasetQuery,
+          database.insert(adpSnapshots).values(
+            input.records.map((record) => ({
+              datasetVersionId: datasetId,
+              playerId: record.playerId,
+              seasonId: season.id,
+              provider: input.provider,
+              scoringFormat: input.scoringFormat,
+              leagueSize: input.leagueSize,
+              averageDraftPosition: String(record.overallAdp),
+              positionalAdp: String(record.positionalAdp),
+              ...(record.minimumPick === undefined
+                ? {}
+                : { minimumPick: String(record.minimumPick) }),
+              ...(record.maximumPick === undefined
+                ? {}
+                : { maximumPick: String(record.maximumPick) }),
+              ...(record.sampleSize === undefined ? {} : { sampleSize: record.sampleSize }),
+              capturedAt: input.retrievedAt
+            }))
+          )
+        ]);
+      } else {
+        await datasetQuery;
+      }
+      return {
+        datasetVersionId: datasetId,
+        persistedRecordCount: input.records.length,
+        retrievedAt: input.retrievedAt
+      };
+    },
+    async listSnapshots(input) {
+      const conditions: SQL[] = [eq(adpSnapshots.seasonId, input.seasonId)];
+      if (input.provider) conditions.push(eq(adpSnapshots.provider, input.provider));
+      if (input.scoringFormat) {
+        conditions.push(eq(adpSnapshots.scoringFormat, input.scoringFormat));
+      }
+      if (input.leagueSize !== undefined) {
+        conditions.push(eq(adpSnapshots.leagueSize, input.leagueSize));
+      }
+      return database
+        .select({
+          datasetVersionId: adpSnapshots.datasetVersionId,
+          playerId: adpSnapshots.playerId,
+          provider: adpSnapshots.provider,
+          scoringFormat: adpSnapshots.scoringFormat,
+          leagueSize: adpSnapshots.leagueSize,
+          seasonId: adpSnapshots.seasonId,
+          overallAdp: adpSnapshots.averageDraftPosition,
+          positionalAdp: adpSnapshots.positionalAdp,
+          minimumPick: adpSnapshots.minimumPick,
+          maximumPick: adpSnapshots.maximumPick,
+          sampleSize: adpSnapshots.sampleSize,
+          retrievedAt: adpSnapshots.capturedAt
+        })
+        .from(adpSnapshots)
+        .where(and(...conditions))
+        .orderBy(desc(adpSnapshots.capturedAt), asc(adpSnapshots.averageDraftPosition));
     }
   };
 
@@ -471,7 +906,8 @@ export function createRepositories(database: Database): {
     draftRepository,
     tradeRepository,
     newsRepository,
-    importRepository
+    importRepository,
+    adpRepository
   };
 }
 
@@ -487,6 +923,167 @@ function numericStatisticValues(values: unknown): Record<string, number> {
     normalized[field] = value;
   }
   return normalized;
+}
+
+async function ensureSeason(
+  database: Pick<Database, "insert" | "select">,
+  seasonYear: number
+): Promise<{ id: string }> {
+  const [inserted] = await database
+    .insert(seasons)
+    .values({ year: seasonYear, kind: "regular" })
+    .onConflictDoNothing({ target: [seasons.year, seasons.kind] })
+    .returning({ id: seasons.id });
+  if (inserted) return inserted;
+  const [existing] = await database
+    .select({ id: seasons.id })
+    .from(seasons)
+    .where(and(eq(seasons.year, seasonYear), eq(seasons.kind, "regular")))
+    .limit(1);
+  if (!existing) throw new Error(`Season ${seasonYear} could not be resolved.`);
+  return existing;
+}
+
+async function listExpertImportRows(
+  database: Pick<Database, "select">,
+  importId: string
+): Promise<NewExpertImportRowRecord[]> {
+  const rows = await database
+    .select({
+      rowNumber: expertImportRows.rowNumber,
+      resolution: expertImportRows.resolution,
+      playerId: expertImportRows.playerId,
+      candidatePlayerIds: expertImportRows.candidatePlayerIds,
+      sourceIdentity: expertImportRows.sourceIdentity,
+      normalizedProjection: expertImportRows.normalizedProjection,
+      normalizedRanking: expertImportRows.normalizedRanking,
+      errors: expertImportRows.errors
+    })
+    .from(expertImportRows)
+    .where(eq(expertImportRows.importId, importId))
+    .orderBy(asc(expertImportRows.rowNumber));
+  return rows.map((row) => ({
+    rowNumber: row.rowNumber,
+    resolution: row.resolution,
+    ...(row.playerId ? { playerId: row.playerId } : {}),
+    candidatePlayerIds: stringArray(row.candidatePlayerIds, "candidate player IDs"),
+    sourceIdentity: stringRecord(row.sourceIdentity, "source identity"),
+    ...(row.normalizedProjection
+      ? {
+          normalizedProjection: unknownRecord(row.normalizedProjection, "normalized projection")
+        }
+      : {}),
+    ...(row.normalizedRanking
+      ? { normalizedRanking: unknownRecord(row.normalizedRanking, "normalized ranking") }
+      : {}),
+    errors: stringArray(row.errors, "import errors")
+  }));
+}
+
+function summarizeImportRows(rows: readonly NewExpertImportRowRecord[]) {
+  const count = (resolution: NewExpertImportRowRecord["resolution"]) =>
+    rows.filter((row) => row.resolution === resolution).length;
+  return {
+    totalRows: rows.length,
+    matchedRows: count("matched"),
+    ambiguousRows: count("ambiguous"),
+    missingRows: count("missing"),
+    invalidRows: count("invalid")
+  };
+}
+
+function normalizedProjectionValues(value: Readonly<Record<string, unknown>>): {
+  statistics: Record<string, number>;
+  projectedGames?: number;
+  projectedPoints?: number;
+  projectedPointsPerGame?: number;
+  floorPoints?: number;
+  medianPoints?: number;
+  ceilingPoints?: number;
+  confidence?: number;
+} {
+  return {
+    statistics: numericStatisticValues(value.statistics ?? {}),
+    ...optionalFiniteNumber(value, "projectedGames"),
+    ...optionalFiniteNumber(value, "projectedPoints"),
+    ...optionalFiniteNumber(value, "projectedPointsPerGame"),
+    ...optionalFiniteNumber(value, "floorPoints"),
+    ...optionalFiniteNumber(value, "medianPoints"),
+    ...optionalFiniteNumber(value, "ceilingPoints"),
+    ...optionalFiniteNumber(value, "confidence")
+  };
+}
+
+function normalizedRankingValues(value: Readonly<Record<string, unknown>>): {
+  overallRank: number;
+  positionRank?: number;
+} {
+  const overallRank = value.overallRank;
+  if (typeof overallRank !== "number" || !Number.isInteger(overallRank) || overallRank < 1) {
+    throw new Error("Normalized expert overall rank must be a positive integer.");
+  }
+  const result: { overallRank: number; positionRank?: number } = { overallRank };
+  const positionRank = value.positionRank;
+  if (positionRank !== undefined) {
+    if (typeof positionRank !== "number" || !Number.isInteger(positionRank) || positionRank < 1) {
+      throw new Error("Normalized expert position rank must be a positive integer.");
+    }
+    result.positionRank = positionRank;
+  }
+  return result;
+}
+
+function optionalFiniteNumber<Key extends string>(
+  value: Readonly<Record<string, unknown>>,
+  key: Key
+): Partial<Record<Key, number>> {
+  const candidate = value[key];
+  if (candidate === undefined) return {};
+  if (typeof candidate !== "number" || !Number.isFinite(candidate)) {
+    throw new Error(`Normalized expert ${key} must be a finite number.`);
+  }
+  return { [key]: candidate } as Record<Key, number>;
+}
+
+function optionalDecimal<Key extends string>(
+  key: Key,
+  value: number | undefined
+): Partial<Record<Key, string>> {
+  return value === undefined ? {} : ({ [key]: String(value) } as Record<Key, string>);
+}
+
+function assertUniqueImportedRanks(rows: readonly NewExpertImportRowRecord[]): void {
+  const ranks = new Set<number>();
+  for (const row of rows) {
+    if (!row.normalizedRanking) continue;
+    const rank = normalizedRankingValues(row.normalizedRanking).overallRank;
+    if (ranks.has(rank)) {
+      throw new Error(`Expert import contains duplicate overall rank ${rank}.`);
+    }
+    ranks.add(rank);
+  }
+}
+
+function unknownRecord(value: unknown, label: string): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`Expert import ${label} must be a JSON object.`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function stringRecord(value: unknown, label: string): Record<string, string> {
+  const record = unknownRecord(value, label);
+  if (Object.values(record).some((entry) => typeof entry !== "string")) {
+    throw new Error(`Expert import ${label} values must be strings.`);
+  }
+  return record as Record<string, string>;
+}
+
+function stringArray(value: unknown, label: string): string[] {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
+    throw new Error(`Expert import ${label} must be a string array.`);
+  }
+  return value;
 }
 
 export type DatabasePlayer = InferSelectModel<typeof players>;

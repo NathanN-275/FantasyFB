@@ -52,6 +52,9 @@ importers:
       '@fantasyfb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@fantasyfb/expert-data':
+        specifier: workspace:*
+        version: link:../../modules/expert-data
       '@fantasyfb/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -91,6 +94,16 @@ importers:
         version: link:../../packages/contracts
 
   modules/draft-room: {}
+
+  modules/expert-data:
+    dependencies:
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/fantasy-core:
     dependencies:

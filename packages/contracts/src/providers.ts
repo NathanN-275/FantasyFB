@@ -43,8 +43,16 @@ export interface ProviderRoster {
 export interface ProviderAdp {
   readonly canonicalId: string;
   readonly playerExternalIds: readonly ProviderExternalId[];
-  readonly averageDraftPosition: number;
+  readonly provider: string;
+  readonly scoringFormat: string;
+  readonly leagueSize: number;
   readonly season: number;
+  readonly overallAdp: number;
+  readonly positionalAdp: number;
+  readonly minimumPick?: number;
+  readonly maximumPick?: number;
+  readonly sampleSize?: number;
+  readonly retrievedAt: Date;
 }
 
 export interface ProviderProjection {
@@ -96,6 +104,25 @@ export interface HistoricalDataProvider {
   loadHistoricalStatistics(input: {
     readonly seasons: readonly number[];
   }): Promise<ProviderDataset<ProviderHistoricalStatistic>>;
+}
+
+export interface ExpertDataProvider {
+  readonly providerName: string;
+  readonly enabled: boolean;
+  loadExpertData(input: { readonly season: number }): Promise<{
+    readonly projections: ProviderDataset<ProviderProjection> | undefined;
+    readonly rankings: ProviderDataset<ProviderRanking> | undefined;
+    readonly unavailableReason?: string;
+  }>;
+}
+
+export interface AdpProvider {
+  readonly providerName: string;
+  loadAdp(input: {
+    readonly season: number;
+    readonly scoringFormat: string;
+    readonly leagueSize: number;
+  }): Promise<ProviderDataset<ProviderAdp>>;
 }
 
 export interface ProviderContracts {

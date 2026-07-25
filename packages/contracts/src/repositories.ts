@@ -9,6 +9,7 @@ export interface AuthorizationContext {
 export interface PlayerRepository {
   findById(playerId: string): Promise<PlayerRecord | undefined>;
   findByExternalId(provider: string, externalId: string): Promise<PlayerRecord | undefined>;
+  listResolutionCandidates(): Promise<PlayerResolutionCandidateRecord[]>;
   upsert(player: NewPlayerRecord): Promise<PlayerRecord>;
 }
 
@@ -57,6 +58,24 @@ export interface NewsRepository {
 
 export interface ImportRepository {
   list(context: AuthorizationContext): Promise<PrivateImportRecord[]>;
+  stageExpertImport(
+    context: AuthorizationContext,
+    input: NewExpertImportRecord
+  ): Promise<ExpertImportPreviewRecord>;
+  findExpertImport(
+    context: AuthorizationContext,
+    importId: string
+  ): Promise<ExpertImportPreviewRecord | undefined>;
+  confirmExpertImport(
+    context: AuthorizationContext,
+    importId: string
+  ): Promise<ConfirmedExpertImportRecord>;
+}
+
+export interface AdpRepository {
+  findLatestSnapshot(input: AdpSnapshotContext): Promise<SavedAdpSnapshotRecord | undefined>;
+  saveSnapshot(input: NewAdpSnapshotRecord): Promise<SavedAdpSnapshotRecord>;
+  listSnapshots(input: AdpSnapshotQuery): Promise<AdpSnapshotRecord[]>;
 }
 
 /**
@@ -80,6 +99,14 @@ export interface NewPlayerRecord extends PlayerRecord {
   readonly availability?: string;
   readonly injuryStatus?: string;
   readonly externalIds: readonly { provider: string; externalId: string; sourceUrl?: string }[];
+}
+
+export interface PlayerResolutionCandidateRecord {
+  readonly id: string;
+  readonly fullName: string;
+  readonly position: string;
+  readonly team?: string;
+  readonly externalIds: readonly { readonly provider: string; readonly value: string }[];
 }
 
 export interface WeeklyStatisticRecord {
@@ -191,7 +218,103 @@ export interface NewsRecord {
 export interface PrivateImportRecord {
   readonly id: string;
   readonly fileName: string;
-  readonly status: "pending" | "processing" | "completed" | "failed" | "quarantined";
+  readonly status:
+    "pending" | "processing" | "awaiting_confirmation" | "completed" | "failed" | "quarantined";
+}
+
+export interface NewExpertImportRecord {
+  readonly seasonYear: number;
+  readonly providerName: string;
+  readonly fileName: string;
+  readonly contentType: string;
+  readonly checksum: string;
+  readonly importKind: "projection" | "ranking" | "combined";
+  readonly importProfile: Readonly<Record<string, unknown>>;
+  readonly preserveOriginal: boolean;
+  readonly originalContent?: string;
+  readonly rows: readonly NewExpertImportRowRecord[];
+}
+
+export interface NewExpertImportRowRecord {
+  readonly rowNumber: number;
+  readonly resolution: "matched" | "ambiguous" | "missing" | "invalid";
+  readonly playerId?: string;
+  readonly candidatePlayerIds: readonly string[];
+  readonly sourceIdentity: Readonly<Record<string, string>>;
+  readonly normalizedProjection?: Readonly<Record<string, unknown>>;
+  readonly normalizedRanking?: Readonly<Record<string, unknown>>;
+  readonly errors: readonly string[];
+}
+
+export interface ExpertImportPreviewRecord extends PrivateImportRecord {
+  readonly seasonYear: number;
+  readonly providerName: string;
+  readonly importKind: "projection" | "ranking" | "combined";
+  readonly totalRows: number;
+  readonly matchedRows: number;
+  readonly ambiguousRows: number;
+  readonly missingRows: number;
+  readonly invalidRows: number;
+  readonly rows: readonly NewExpertImportRowRecord[];
+}
+
+export interface ConfirmedExpertImportRecord extends PrivateImportRecord {
+  readonly status: "completed";
+  readonly persistedProjectionCount: number;
+  readonly persistedRankingCount: number;
+  readonly skippedRowCount: number;
+}
+
+export interface NewAdpSnapshotRecord {
+  readonly provider: string;
+  readonly seasonYear: number;
+  readonly scoringFormat: string;
+  readonly leagueSize: number;
+  readonly retrievedAt: Date;
+  readonly totalDrafts?: number;
+  readonly records: readonly {
+    readonly playerId: string;
+    readonly overallAdp: number;
+    readonly positionalAdp: number;
+    readonly minimumPick?: number;
+    readonly maximumPick?: number;
+    readonly sampleSize?: number;
+  }[];
+}
+
+export interface SavedAdpSnapshotRecord {
+  readonly datasetVersionId: string;
+  readonly persistedRecordCount: number;
+  readonly retrievedAt: Date;
+}
+
+export interface AdpSnapshotContext {
+  readonly provider: string;
+  readonly seasonYear: number;
+  readonly scoringFormat: string;
+  readonly leagueSize: number;
+}
+
+export interface AdpSnapshotQuery {
+  readonly seasonId: string;
+  readonly provider?: string;
+  readonly scoringFormat?: string;
+  readonly leagueSize?: number;
+}
+
+export interface AdpSnapshotRecord {
+  readonly datasetVersionId: string;
+  readonly playerId: string;
+  readonly provider: string;
+  readonly scoringFormat: string;
+  readonly leagueSize: number;
+  readonly seasonId: string;
+  readonly overallAdp: string;
+  readonly positionalAdp: string;
+  readonly minimumPick: string | null;
+  readonly maximumPick: string | null;
+  readonly sampleSize: number | null;
+  readonly retrievedAt: Date;
 }
 
 export interface DatasetIdentity {

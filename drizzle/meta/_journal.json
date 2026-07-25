@@ -36,6 +36,13 @@
       "when": 1784858458318,
       "tag": "0004_projection-engine-v1",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785001923124,
+      "tag": "0005_expert-imports-adp-snapshots",
+      "breakpoints": true
     }
   ]
 }

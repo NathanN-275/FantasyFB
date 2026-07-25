@@ -9,7 +9,9 @@ async function migrationSql() {
     "0000_spotty_exodus.sql",
     "0001_brief_bloodstrike.sql",
     "0002_authentication_sessions.sql",
-    "0003_organic_leo.sql"
+    "0003_organic_leo.sql",
+    "0004_projection-engine-v1.sql",
+    "0005_expert-imports-adp-snapshots.sql"
   ];
   return Promise.all(
     files.map((file) => readFile(fileURLToPath(new URL(file, migrationDirectory)), "utf8"))
@@ -48,6 +50,7 @@ describe("initial database migrations", () => {
       "news_records",
       "player_news",
       "private_data_imports",
+      "expert_import_rows",
       "user_accounts",
       "authorized_user_identities",
       "auth_sessions"
@@ -65,6 +68,10 @@ describe("initial database migrations", () => {
     expect(sql).toContain("draft_events_draft_sequence_unique");
     expect(sql).toContain("draft_events_draft_idempotency_unique");
     expect(sql).toContain("auth_sessions_token_unique");
+    expect(sql).toContain("awaiting_confirmation");
+    expect(sql).toContain("expert_import_rows_matched_player_required");
+    expect(sql).toContain("adp_snapshots_provider_context_time_index");
+    expect(sql).toContain("adp_snapshots_pick_bounds_valid");
     expect(sql).toContain('REFERENCES "public"."players"');
     expect(sql).toContain('REFERENCES "public"."user_accounts"');
   });

@@ -1,16 +1,20 @@
 import { SignOutButton } from "../../../components/auth-buttons";
+import { ExpertImportPanel } from "../../../components/expert-import-panel";
 import { requireAuthorizedUser } from "../../../server/auth/private-access";
+import { getExpertDataStatus } from "../../../server/expert-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function WorkspacePage() {
   const user = await requireAuthorizedUser();
+  const currentSeason = new Date().getFullYear();
+  const expertStatus = await getExpertDataStatus(currentSeason);
 
   return (
     <main>
       <p>PRIVATE WORKSPACE</p>
       <h1>FantasyFB workspace</h1>
-      <p>Your account is authorized. Fantasy features will be added in later prompts.</p>
+      <p>Your account is authorized. Private imports remain visible only to this account.</p>
       <section aria-labelledby="account-heading">
         <h2 id="account-heading">Account information</h2>
         <dl>
@@ -22,6 +26,7 @@ export default async function WorkspacePage() {
           <dd>{user.email ?? "Not provided"}</dd>
         </dl>
       </section>
+      <ExpertImportPanel expertStatus={expertStatus} defaultSeason={currentSeason} />
       <SignOutButton />
     </main>
   );

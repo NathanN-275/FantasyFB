@@ -31,9 +31,17 @@ export const datasetStatus = pgEnum("dataset_status", [
 export const importStatus = pgEnum("import_status", [
   "pending",
   "processing",
+  "awaiting_confirmation",
   "completed",
   "failed",
   "quarantined"
+]);
+export const expertImportKind = pgEnum("expert_import_kind", ["projection", "ranking", "combined"]);
+export const playerResolutionStatus = pgEnum("player_resolution_status", [
+  "matched",
+  "ambiguous",
+  "missing",
+  "invalid"
 ]);
 export const seasonKind = pgEnum("season_kind", ["preseason", "regular", "postseason"]);
 export const rosterSlotKind = pgEnum("roster_slot_kind", ["starter", "bench", "injured_reserve"]);
@@ -220,6 +228,10 @@ export const privateDataImports = pgTable(
       .notNull()
       .references(() => userAccounts.id, { onDelete: "cascade" }),
     sourceId: uuid("source_id").references(() => dataSources.id, { onDelete: "set null" }),
+    seasonId: uuid("season_id").references(() => seasons.id, { onDelete: "restrict" }),
+    providerName: text("provider_name"),
+    importKind: expertImportKind("import_kind"),
+    importProfile: jsonb("import_profile"),
     fileName: text("file_name").notNull(),
     contentType: text("content_type").notNull(),
     checksum: text("checksum").notNull(),
@@ -227,11 +239,43 @@ export const privateDataImports = pgTable(
     recordCount: integer("record_count"),
     errorMessage: text("error_message"),
     preserveOriginal: boolean("preserve_original").notNull().default(false),
+    originalContent: text("original_content"),
+    previewSummary: jsonb("preview_summary"),
     createdAt,
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true })
   },
   (table) => [
     index("private_data_imports_owner_created_index").on(table.ownerUserId, table.createdAt)
+  ]
+);
+
+/** Normalized staging rows; original CSV columns are intentionally not retained here. */
+export const expertImportRows = pgTable(
+  "expert_import_rows",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    importId: uuid("import_id")
+      .notNull()
+      .references(() => privateDataImports.id, { onDelete: "cascade" }),
+    rowNumber: integer("row_number").notNull(),
+    resolution: playerResolutionStatus("resolution").notNull(),
+    playerId: uuid("player_id").references(() => players.id, { onDelete: "set null" }),
+    candidatePlayerIds: jsonb("candidate_player_ids").notNull().default([]),
+    sourceIdentity: jsonb("source_identity").notNull(),
+    normalizedProjection: jsonb("normalized_projection"),
+    normalizedRanking: jsonb("normalized_ranking"),
+    errors: jsonb("errors").notNull().default([]),
+    createdAt
+  },
+  (table) => [
+    unique("expert_import_rows_import_row_unique").on(table.importId, table.rowNumber),
+    index("expert_import_rows_import_resolution_index").on(table.importId, table.resolution),
+    check("expert_import_rows_row_positive", sql`${table.rowNumber} > 0`),
+    check(
+      "expert_import_rows_matched_player_required",
+      sql`(${table.resolution} <> 'matched' or ${table.playerId} is not null)`
+    )
   ]
 );
 
@@ -392,6 +436,7 @@ export const projectionRuns = pgTable(
     datasetVersionId: uuid("dataset_version_id")
       .notNull()
       .references(() => datasetVersions.id, { onDelete: "restrict" }),
+    importId: uuid("import_id").references(() => privateDataImports.id, { onDelete: "set null" }),
     ownerUserId: uuid("owner_user_id").references(() => userAccounts.id, { onDelete: "cascade" }),
     visibility: dataVisibility("visibility").notNull(),
     seasonId: uuid("season_id")
@@ -448,6 +493,7 @@ export const rankingRuns = pgTable(
     datasetVersionId: uuid("dataset_version_id").references(() => datasetVersions.id, {
       onDelete: "restrict"
     }),
+    importId: uuid("import_id").references(() => privateDataImports.id, { onDelete: "set null" }),
     ownerUserId: uuid("owner_user_id").references(() => userAccounts.id, { onDelete: "cascade" }),
     visibility: dataVisibility("visibility").notNull(),
     seasonId: uuid("season_id")
@@ -502,13 +548,31 @@ export const adpSnapshots = pgTable(
     seasonId: uuid("season_id")
       .notNull()
       .references(() => seasons.id, { onDelete: "restrict" }),
+    provider: text("provider").notNull(),
+    scoringFormat: text("scoring_format").notNull(),
+    leagueSize: integer("league_size").notNull(),
     averageDraftPosition: decimal("average_draft_position").notNull(),
+    positionalAdp: decimal("positional_adp").notNull(),
+    minimumPick: decimal("minimum_pick"),
+    maximumPick: decimal("maximum_pick"),
     sampleSize: integer("sample_size"),
     capturedAt: timestamp("captured_at", { withTimezone: true }).notNull(),
     createdAt
   },
   (table) => [
-    unique("adp_snapshots_dataset_player_unique").on(table.datasetVersionId, table.playerId)
+    unique("adp_snapshots_dataset_player_unique").on(table.datasetVersionId, table.playerId),
+    index("adp_snapshots_provider_context_time_index").on(
+      table.provider,
+      table.seasonId,
+      table.scoringFormat,
+      table.leagueSize,
+      table.capturedAt
+    ),
+    check("adp_snapshots_league_size_positive", sql`${table.leagueSize} > 0`),
+    check(
+      "adp_snapshots_pick_bounds_valid",
+      sql`(${table.minimumPick} is null or ${table.maximumPick} is null or ${table.minimumPick} <= ${table.maximumPick})`
+    )
   ]
 );
 
