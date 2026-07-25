@@ -55,6 +55,9 @@ importers:
       '@fantasyfb/expert-data':
         specifier: workspace:*
         version: link:../../modules/expert-data
+      '@fantasyfb/player-intelligence':
+        specifier: workspace:*
+        version: link:../../modules/player-intelligence
       '@fantasyfb/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -132,7 +135,15 @@ importers:
 
   modules/news-intelligence: {}
 
-  modules/player-intelligence: {}
+  modules/player-intelligence:
+    dependencies:
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/projection-engine:
     dependencies:

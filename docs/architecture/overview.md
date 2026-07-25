@@ -34,3 +34,9 @@ replacement assumptions, and optional hybrid weights. It exposes the active form
 availability, never silently substitutes Model Rank for Expert Rank, and requires callers to explicitly
 allow weight renormalization when hybrid inputs are incomplete. See the
 [ranking methodology](../model-methodology/rankings-and-tiers.md).
+
+`@fantasyfb/player-intelligence` composes normalized player metadata, history, projections, rankings,
+ADP, risk, injuries, news, provenance, and freshness behind one research interface. It owns filtering,
+sorting, comparisons, and missing/stale-data policy so React routes only render evaluations. The
+public research routes use an explicitly synthetic sample adapter; see the
+[Player Intelligence architecture](./player-intelligence.md).
