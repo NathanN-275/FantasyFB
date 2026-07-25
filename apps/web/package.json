@@ -16,6 +16,7 @@
     "@fantasyfb/contracts": "workspace:*",
     "@fantasyfb/database": "workspace:*",
     "@fantasyfb/expert-data": "workspace:*",
+    "@fantasyfb/league-gateway": "workspace:*",
     "@fantasyfb/player-intelligence": "workspace:*",
     "@fantasyfb/ui": "workspace:*",
     "better-auth": "^1.6.23",

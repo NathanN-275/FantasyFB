@@ -1,5 +1,6 @@
 import { SignOutButton } from "../../../components/auth-buttons";
 import { ExpertImportPanel } from "../../../components/expert-import-panel";
+import { LeagueGatewayPanel } from "../../../components/league-gateway-panel";
 import { requireAuthorizedUser } from "../../../server/auth/private-access";
 import { getExpertDataStatus } from "../../../server/expert-data";
 
@@ -26,6 +27,7 @@ export default async function WorkspacePage() {
           <dd>{user.email ?? "Not provided"}</dd>
         </dl>
       </section>
+      <LeagueGatewayPanel defaultSeason={currentSeason} />
       <ExpertImportPanel expertStatus={expertStatus} defaultSeason={currentSeason} />
       <SignOutButton />
     </main>

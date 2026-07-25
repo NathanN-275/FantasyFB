@@ -54,7 +54,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -89,7 +90,8 @@ button:disabled {
 }
 
 input,
-select {
+select,
+textarea {
   background: #0c1210;
   border: 1px solid var(--line-strong);
   border-radius: 0;
@@ -100,16 +102,214 @@ select {
   width: 100%;
 }
 
+textarea {
+  line-height: 1.5;
+  min-height: 180px;
+  resize: vertical;
+}
+
 input::placeholder {
   color: var(--dim);
 }
 
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 button:focus-visible,
 a:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 3px;
+}
+
+.league-gateway {
+  border-top: 1px solid var(--line);
+  margin-top: 3rem;
+  padding-top: 3rem;
+}
+
+.league-gateway > p:not(.eyebrow),
+.league-card > p:not(.section-kicker),
+.league-summary p,
+.league-summary span {
+  color: var(--muted);
+}
+
+.league-gateway-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 2rem 0;
+}
+
+.league-card,
+.league-summary {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 1.5rem;
+}
+
+.league-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.league-card label,
+.league-manual-form details label {
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 0.45rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.league-card button {
+  align-self: flex-start;
+}
+
+.league-manual-form {
+  grid-row: span 2;
+}
+
+.league-form-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.league-manual-form details {
+  border-block: 1px solid var(--line);
+  padding: 1rem 0;
+}
+
+.league-manual-form details > p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 1rem 0;
+}
+
+.league-manual-form details label + label {
+  margin-top: 1rem;
+}
+
+.league-manual-form summary {
+  color: var(--mint);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.league-discovery-list,
+.capability-list {
+  display: grid;
+  gap: 0.7rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.league-discovery-list li,
+.capability-list li {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-top: 0.7rem;
+}
+
+.league-discovery-list strong,
+.league-discovery-list span,
+.capability-list strong,
+.capability-list span {
+  display: block;
+}
+
+.league-discovery-list span,
+.capability-list span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+}
+
+.league-discovery-list button {
+  min-height: 36px;
+  padding: 0.45rem 0.7rem;
+}
+
+.league-summary {
+  border-color: var(--line-strong);
+  box-shadow: 10px 10px 0 var(--mint-dark);
+  margin-top: 2rem;
+}
+
+.league-summary-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+}
+
+.league-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 2rem 0;
+}
+
+.league-metrics div {
+  border: 1px solid var(--line);
+  padding: 1rem;
+}
+
+.league-metrics dt {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.league-metrics dd {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.5rem;
+  margin: 0.4rem 0 0;
+}
+
+.capability-list {
+  margin-bottom: 2rem;
+}
+
+.capability-list li {
+  justify-content: flex-start;
+}
+
+.capability-state {
+  border: 1px solid currentColor;
+  color: var(--muted);
+  flex: 0 0 7.5rem;
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.08em;
+  margin: 0 !important;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.capability-available {
+  color: var(--mint) !important;
+}
+
+.capability-experimental {
+  color: var(--gold) !important;
+}
+
+.capability-unavailable {
+  color: var(--red) !important;
+}
+
+.capability-planned {
+  color: var(--orange) !important;
 }
 
 h1,
@@ -1142,6 +1342,19 @@ h2 {
 }
 
 @media (max-width: 800px) {
+  .league-gateway-grid,
+  .league-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .league-manual-form {
+    grid-row: auto;
+  }
+
+  .league-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .home-shell,
   .research-shell {
     padding-inline: 1rem;
@@ -1308,6 +1521,21 @@ h2 {
 }
 
 @media (max-width: 600px) {
+  .league-summary-heading,
+  .capability-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .league-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .capability-state {
+    flex-basis: auto;
+    width: fit-content;
+  }
+
   h1 {
     font-size: 3.7rem;
   }

@@ -40,3 +40,10 @@ ADP, risk, injuries, news, provenance, and freshness behind one research interfa
 sorting, comparisons, and missing/stale-data policy so React routes only render evaluations. The
 public research routes use an explicitly synthetic sample adapter; see the
 [Player Intelligence architecture](./player-intelligence.md).
+
+`@fantasyfb/league-gateway` is the sole league-provider anti-corruption interface. It discovers and
+normalizes documented read-only Sleeper data, complete manual and ESPN-based profiles, and versioned
+portable JSON. Unknown provider scoring or roster fields remain explicit warnings, provider failures
+never fabricate fallback data, and ESPN automation remains unavailable. See the
+[League Gateway architecture](./league-gateway.md) and
+[Sleeper source review](../data-sources/sleeper-api.md).

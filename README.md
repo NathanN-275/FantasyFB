@@ -18,19 +18,20 @@ Build a private workspace that helps its owner make better fantasy-football deci
 
 ## Current implementation and planned path
 
-| Capability                    | Status                 | Intended outcome                                                                                                                     |
-| ----------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Public web shell              | Implemented            | A Next.js public demo using sample data only.                                                                                        |
-| Private workspace boundary    | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                |
-| Canonical football domain     | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                  |
-| Scoring engine                | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                     |
-| Database foundation           | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news. |
-| Expert/ADP/private imports    | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                   |
-| Projections                   | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.         |
-| Rankings                      | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                     |
-| Player intelligence           | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.          |
-| League and draft integrations | Planned                | Provider-neutral league sync and event-based draft state.                                                                            |
-| Trade and news analysis       | Planned                | Explainable trade evaluation and permitted news aggregation.                                                                         |
+| Capability                 | Status                 | Intended outcome                                                                                                                     |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Public web shell           | Implemented            | A Next.js public demo using sample data only.                                                                                        |
+| Private workspace boundary | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                |
+| Canonical football domain  | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                  |
+| Scoring engine             | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                     |
+| Database foundation        | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news. |
+| Expert/ADP/private imports | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                   |
+| Projections                | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.         |
+| Rankings                   | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                     |
+| Player intelligence        | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.          |
+| League gateway             | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                 |
+| Draft integrations         | Planned                | Append-only draft events, provider polling, deterministic replay, and recommendations.                                               |
+| Trade and news analysis    | Planned                | Explainable trade evaluation and permitted news aggregation.                                                                         |
 
 ## Design choices
 
@@ -48,6 +49,7 @@ Build a private workspace that helps its owner make better fantasy-football deci
 - `apps/espn-companion` — reserved, optional experimental browser companion; it is disabled by default and will not collect credentials, cookies, or unrelated browsing data.
 - `modules/fantasy-core` — canonical football domain and deterministic scoring engine.
 - `modules/player-intelligence` — normalized player research, comparisons, filters, risk, and freshness policy.
+- `modules/league-gateway` — provider-neutral league configuration, Sleeper read-only import, manual/ESPN profiles, and portable JSON.
 - `modules/*` — planned provider-independent capabilities for data cataloging, projections, rankings, player intelligence, leagues, drafts, trades, and news.
 - `packages/*` — shared contracts plus authentication, database, storage, observability, and UI infrastructure boundaries.
 - `pipelines` — Python pipeline foundations for historical data, projections, expert imports, and news.
