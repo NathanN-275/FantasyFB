@@ -27,7 +27,7 @@ Build a private workspace that helps its owner make better fantasy-football deci
 | Database foundation           | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news. |
 | Expert/ADP/private imports    | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                   |
 | Projections                   | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.         |
-| Rankings                      | Planned                | League-aware rankings and tiers built from validated projection inputs.                                                              |
+| Rankings                      | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                     |
 | League and draft integrations | Planned                | Provider-neutral league sync and event-based draft state.                                                                            |
 | Trade and news analysis       | Planned                | Explainable trade evaluation and permitted news aggregation.                                                                         |
 

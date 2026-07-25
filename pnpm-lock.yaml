@@ -147,7 +147,18 @@ importers:
         specifier: ^3.1.2
         version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
-  modules/ranking-engine: {}
+  modules/ranking-engine:
+    dependencies:
+      '@fantasyfb/fantasy-core':
+        specifier: workspace:*
+        version: link:../fantasy-core
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/trade-engine: {}
 

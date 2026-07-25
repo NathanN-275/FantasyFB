@@ -7,6 +7,7 @@ The first projection model is implemented and versioned as
 - [Feature definitions](./feature-definitions.md) records every selected feature and why it exists.
 - [Backtests and calibration](./backtests-and-calibration.md) defines the evaluation and reports the checked-in synthetic-fixture result.
 - [Known limitations](./known-limitations.md) states what version one cannot support or claim.
+- [Rankings and tiers](./rankings-and-tiers.md) documents replacement value, scarcity, hybrid formulas, input availability, and reproducible tier boundaries.
 - [Pipeline commands](../../pipelines/projections/README.md) reproduce generation and verification.
 
 Every production run carries its own backtest and calibration report. The

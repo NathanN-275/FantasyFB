@@ -27,3 +27,10 @@ Expert projections and rankings now enter through credential-gated authorized AP
 private CSV previews. ADP uses `FantasyFootballCalculatorAdpProvider`; each retrieval creates a new
 versioned snapshot and should run no more than daily. Missing providers are represented explicitly,
 so model outputs continue without fabricated expert values.
+
+`@fantasyfb/ranking-engine` is the single pure interface for league-aware rankings and tiers. It accepts
+validated model projections, optional expert and ADP inputs, scoring and roster configuration, explicit
+replacement assumptions, and optional hybrid weights. It exposes the active formula and input
+availability, never silently substitutes Model Rank for Expert Rank, and requires callers to explicitly
+allow weight renormalization when hybrid inputs are incomplete. See the
+[ranking methodology](../model-methodology/rankings-and-tiers.md).
