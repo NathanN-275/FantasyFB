@@ -8,6 +8,7 @@ import {
   type NormalizedNewsRecord,
   type PermittedNewsSource
 } from "@fantasyfb/news-intelligence";
+import { createStructuredLogger, resolveCorrelationId } from "@fantasyfb/observability";
 import { z } from "zod";
 
 const environmentSchema = z.object({
@@ -42,16 +43,18 @@ const sources = z.array(configuredSourceSchema).parse(rawSources);
 const sourceTokens = z
   .record(z.string().min(1), z.string().min(1))
   .parse(JSON.parse(environment.NEWS_SOURCE_TOKENS_JSON));
+const correlationId = resolveCorrelationId(process.env.CORRELATION_ID);
+const logger = createStructuredLogger({
+  component: "news-ingestion",
+  environment: process.env.GITHUB_ACTIONS ? "github-actions" : "local",
+  baseFields: { correlationId }
+});
 
 if (!sources.length) {
-  console.log(
-    JSON.stringify({
-      status: "disabled",
-      message:
-        "No permitted news sources are configured. Set NEWS_SOURCES_JSON only after source usage has been reviewed.",
-      sources: []
-    })
-  );
+  logger.warn("news.ingestion.disabled", {
+    reason:
+      "No permitted news sources are configured. Set NEWS_SOURCES_JSON only after source usage has been reviewed."
+  });
   process.exit(0);
 }
 
@@ -119,6 +122,11 @@ for (const configuredSource of sources) {
       ...(datasetVersionId ? { datasetVersionId } : {})
     });
   } catch (error) {
+    logger.error("news.provider.failed", {
+      sourceId: source.id,
+      preservedLastValidDataset: Boolean(previous),
+      error: error instanceof Error ? error : new Error("Unknown news provider failure")
+    });
     report.push({
       sourceId: source.id,
       status: previous ? "preserved" : "unavailable",
@@ -133,14 +141,16 @@ for (const configuredSource of sources) {
   }
 }
 
-console.log(
-  JSON.stringify({
-    status: report.some((source) => source.status === "unavailable") ? "degraded" : "completed",
-    generatedAt: new Date().toISOString(),
-    ignoredPlayersWithUnsupportedPositions: catalog.players.length - players.length,
-    sources: report
-  })
-);
+logger.info("news.ingestion.finished", {
+  status: report.some((source) => source.status === "unavailable") ? "degraded" : "completed",
+  ignoredPlayersWithUnsupportedPositions: catalog.players.length - players.length,
+  sources: report.map((source) => ({
+    sourceId: source.sourceId,
+    status: source.status,
+    recordCount: source.recordCount,
+    ...(source.datasetVersionId ? { datasetVersionId: source.datasetVersionId } : {})
+  }))
+});
 
 if (report.some((source) => source.status === "unavailable")) process.exitCode = 1;
 

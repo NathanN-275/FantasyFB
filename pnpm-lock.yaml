@@ -67,6 +67,9 @@ importers:
       '@fantasyfb/news-intelligence':
         specifier: workspace:*
         version: link:../../modules/news-intelligence
+      '@fantasyfb/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@fantasyfb/player-intelligence':
         specifier: workspace:*
         version: link:../../modules/player-intelligence
@@ -279,7 +282,11 @@ importers:
         specifier: ^3.1.2
         version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
-  packages/observability: {}
+  packages/observability:
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   packages/storage: {}
 
@@ -288,6 +295,25 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.7
+
+  pipelines/adp:
+    dependencies:
+      '@fantasyfb/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@fantasyfb/expert-data':
+        specifier: workspace:*
+        version: link:../../modules/expert-data
+      '@fantasyfb/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.19.3
+        version: 4.23.1
 
   pipelines/news:
     dependencies:
@@ -300,6 +326,9 @@ importers:
       '@fantasyfb/news-intelligence':
         specifier: workspace:*
         version: link:../../modules/news-intelligence
+      '@fantasyfb/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       zod:
         specifier: ^3.24.3
         version: 3.25.76

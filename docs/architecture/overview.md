@@ -10,6 +10,12 @@ FantasyFB is a pnpm monorepo. `apps/web` owns HTTP and React presentation; it ma
 - Draft state will be reduced from an append-only event history. Realtime transports will remain replaceable.
 - PostgreSQL and Vercel choices belong to infrastructure, not domain modules.
 
+Production operations use structured redacted logs and correlation IDs through
+`@fantasyfb/observability`. The authenticated Data Health surface reads only public/sample metadata and
+the current owner's private datasets and drafts through a read-only repository. Runtime Neon traffic
+uses pooled connections; migrations and recovery use a separate direct connection. See the
+[operations guide](../operations/deployment.md).
+
 See [the database schema boundary](./database-schema.md) for the ownership model, versioned provenance, repository contracts, and operational commands.
 
 The `pnpm boundaries` command rejects imports into another workspace's `src` or `internal` path. Workspace package exports are the only supported cross-module import surface.

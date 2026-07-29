@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CORRELATION_ID: historical-${{ github.run_id }}-${{ github.run_attempt }}
       SEASONS: ${{ inputs.seasons || '2025' }}
     steps:
       - uses: actions/checkout@v4

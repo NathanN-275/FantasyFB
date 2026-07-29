@@ -21,9 +21,11 @@
     "boundaries": "node scripts/validate-import-boundaries.mjs",
     "db:generate": "pnpm --filter @fantasyfb/database exec drizzle-kit generate",
     "db:migrate": "pnpm --filter @fantasyfb/database db:migrate",
+    "db:migrations:check": "pnpm --filter @fantasyfb/database db:migrations:check",
     "db:validate": "pnpm --filter @fantasyfb/database db:validate",
     "db:seed": "pnpm --filter @fantasyfb/database db:seed",
     "db:test:reset": "pnpm --filter @fantasyfb/database db:test:reset",
+    "adp:ingest": "pnpm --filter @fantasyfb/adp-pipeline ingest",
     "news:ingest": "pnpm --filter @fantasyfb/news-pipeline ingest"
   },
   "devDependencies": {

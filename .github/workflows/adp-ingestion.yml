@@ -1,27 +1,27 @@
-name: Scheduled news ingestion
+name: Scheduled ADP ingestion
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "23 * * * *"
+    - cron: "41 11 * * *"
 
 permissions:
   contents: read
 
 concurrency:
-  group: scheduled-news-ingestion
+  group: scheduled-adp-ingestion
   cancel-in-progress: false
 
 jobs:
-  aggregate:
+  ingest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATABASE_DIRECT_URL: ${{ secrets.DATABASE_DIRECT_URL }}
-      NEWS_SOURCES_JSON: ${{ secrets.NEWS_SOURCES_JSON }}
-      NEWS_SOURCE_TOKENS_JSON: ${{ secrets.NEWS_SOURCE_TOKENS_JSON }}
-      CORRELATION_ID: news-${{ github.run_id }}-${{ github.run_attempt }}
+      TARGET_SEASON: ${{ vars.TARGET_SEASON || '2026' }}
+      ADP_CONTEXTS_JSON: ${{ vars.ADP_CONTEXTS_JSON }}
+      CORRELATION_ID: adp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -32,17 +32,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Require explicit scoring and league-size contexts
+        run: test -n "$ADP_CONTEXTS_JSON"
       - name: Apply portable PostgreSQL migrations
         run: pnpm db:migrate
-      - name: Aggregate permitted news sources
+      - name: Ingest configured ADP snapshots
         shell: bash
         run: |
           set -o pipefail
-          pnpm news:ingest | tee news-ingestion-report.json
-      - name: Upload ingestion report
+          pnpm adp:ingest | tee adp-ingestion-report.jsonl
+      - name: Upload structured ingestion log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: news-ingestion-report
-          path: news-ingestion-report.json
+          name: adp-ingestion-report
+          path: adp-ingestion-report.jsonl
           if-no-files-found: warn

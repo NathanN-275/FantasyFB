@@ -7,6 +7,7 @@ import {
   FantasyFootballCalculatorAdpProvider,
   NoExpertDataProvider,
   PrivateCsvExpertProvider,
+  resolveAdpDataset,
   resolvePlayerIdentity,
   type CsvImportProfile,
   type ExpertDataProvider
@@ -260,34 +261,9 @@ export async function refreshAdpSnapshot(input: {
     }),
     repositories.playerRepository.listResolutionCandidates()
   ]);
-  const resolved = dataset.records.flatMap((record) => {
-    const candidates = resolvePlayerIdentity(
-      {
-        fullName: record.fullName,
-        ...(record.team ? { team: record.team } : {}),
-        position: record.position,
-        externalId: record.providerPlayerId,
-        externalIdProvider: dataset.provider
-      },
-      players
-    );
-    if (candidates.length !== 1) return [];
-    return [
-      {
-        playerId: candidates[0]!.id,
-        overallAdp: record.overallAdp,
-        positionalAdp: record.positionalAdp,
-        ...(record.minimumPick === undefined ? {} : { minimumPick: record.minimumPick }),
-        ...(record.maximumPick === undefined ? {} : { maximumPick: record.maximumPick }),
-        ...(record.sampleSize === undefined ? {} : { sampleSize: record.sampleSize })
-      }
-    ];
-  });
-  if (!resolved.length) {
+  const resolved = resolveAdpDataset(dataset, players);
+  if (!resolved.records.length) {
     throw new Error("No ADP provider players could be resolved to canonical players.");
-  }
-  if (new Set(resolved.map((record) => record.playerId)).size !== resolved.length) {
-    throw new Error("ADP provider records resolved to duplicate canonical players.");
   }
   const saved = await repositories.adpRepository.saveSnapshot({
     provider: dataset.provider,
@@ -296,13 +272,13 @@ export async function refreshAdpSnapshot(input: {
     leagueSize: dataset.leagueSize,
     retrievedAt: dataset.retrievedAt,
     ...(dataset.totalDrafts === undefined ? {} : { totalDrafts: dataset.totalDrafts }),
-    records: resolved
+    records: resolved.records
   });
   return {
     ...saved,
     reused: false,
     providerRecordCount: dataset.records.length,
-    unresolvedRecordCount: dataset.records.length - resolved.length
+    unresolvedRecordCount: resolved.unresolved.length
   };
 }
 

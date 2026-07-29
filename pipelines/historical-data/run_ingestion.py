@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -35,8 +36,21 @@ def main() -> int:
         else JsonHistoricalDataRepository(args.state_file)
     )
     reports = HistoricalIngestionService(NflverseHistoricalDataProvider(), repository).ingest(args.seasons)
-    print(json.dumps([json.loads(report.to_json()) for report in reports], sort_keys=True))
-    return 0 if all(report.status == "completed" for report in reports) else 1
+    completed = all(report.status == "completed" for report in reports)
+    print(
+        json.dumps(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "level": "info" if completed else "error",
+                "component": "historical-data-ingestion",
+                "event": "historical.ingestion.finished",
+                "status": "completed" if completed else "degraded",
+                "reports": [json.loads(report.to_json()) for report in reports],
+            },
+            sort_keys=True,
+        )
+    )
+    return 0 if completed else 1
 
 
 if __name__ == "__main__":

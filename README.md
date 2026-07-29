@@ -90,7 +90,10 @@ pnpm typecheck
 pnpm test
 pnpm test:python
 pnpm build
+pnpm db:migrations:check
 pnpm db:validate
 ```
 
 See [architecture documentation](./docs/architecture/overview.md) for boundaries and [decisions](./docs/decisions) for the foundational trade-offs.
+Production setup, release validation, observability, and recovery are documented in the
+[`docs/operations`](./docs/operations/deployment.md).

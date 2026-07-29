@@ -435,6 +435,54 @@ export class NoAdpProvider implements AdpProvider {
   }
 }
 
+export interface ResolvedAdpDataset {
+  readonly records: readonly {
+    readonly playerId: string;
+    readonly overallAdp: number;
+    readonly positionalAdp: number;
+    readonly minimumPick?: number;
+    readonly maximumPick?: number;
+    readonly sampleSize?: number;
+  }[];
+  readonly unresolved: readonly AdpProviderRecord[];
+}
+
+export function resolveAdpDataset(
+  dataset: AdpDataset,
+  players: readonly PlayerResolutionCandidate[]
+): ResolvedAdpDataset {
+  const records: ResolvedAdpDataset["records"][number][] = [];
+  const unresolved: AdpProviderRecord[] = [];
+  for (const record of dataset.records) {
+    const candidates = resolvePlayerIdentity(
+      {
+        fullName: record.fullName,
+        ...(record.team ? { team: record.team } : {}),
+        position: record.position,
+        externalId: record.providerPlayerId,
+        externalIdProvider: dataset.provider
+      },
+      players
+    );
+    if (candidates.length !== 1) {
+      unresolved.push(record);
+      continue;
+    }
+    records.push({
+      playerId: candidates[0]!.id,
+      overallAdp: record.overallAdp,
+      positionalAdp: record.positionalAdp,
+      ...(record.minimumPick === undefined ? {} : { minimumPick: record.minimumPick }),
+      ...(record.maximumPick === undefined ? {} : { maximumPick: record.maximumPick }),
+      ...(record.sampleSize === undefined ? {} : { sampleSize: record.sampleSize })
+    });
+  }
+  if (new Set(records.map((record) => record.playerId)).size !== records.length) {
+    throw new Error("ADP provider records resolved to duplicate canonical players.");
+  }
+  return { records, unresolved };
+}
+
 export interface ExpertDisplayState {
   readonly showModelRank: true;
   readonly showModelProjection: true;

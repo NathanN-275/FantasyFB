@@ -1,5 +1,5 @@
 {
-  "name": "@fantasyfb/news-pipeline",
+  "name": "@fantasyfb/adp-pipeline",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,9 +9,8 @@
     "test": "node -e \"process.exit(0)\""
   },
   "dependencies": {
-    "@fantasyfb/contracts": "workspace:*",
     "@fantasyfb/database": "workspace:*",
-    "@fantasyfb/news-intelligence": "workspace:*",
+    "@fantasyfb/expert-data": "workspace:*",
     "@fantasyfb/observability": "workspace:*",
     "zod": "^3.24.3"
   },

@@ -5,6 +5,7 @@ import {
   FantasyFootballCalculatorAdpProvider,
   NoExpertDataProvider,
   PrivateCsvExpertProvider,
+  resolveAdpDataset,
   type CsvImportProfile
 } from "./index.js";
 
@@ -217,5 +218,45 @@ describe("Fantasy Football Calculator ADP provider", () => {
         { providerPlayerId: "12", overallAdp: 3.5, positionalAdp: 2 }
       ]
     });
+  });
+
+  it("reports unresolved identities while returning uniquely matched canonical records", () => {
+    const result = resolveAdpDataset(
+      {
+        provider: "fantasy-football-calculator",
+        season: 2026,
+        scoringFormat: "ppr",
+        leagueSize: 10,
+        retrievedAt: new Date("2026-07-25T12:00:00Z"),
+        records: [
+          {
+            providerPlayerId: "10",
+            fullName: "Matched Player",
+            position: "WR",
+            overallAdp: 12,
+            positionalAdp: 5
+          },
+          {
+            providerPlayerId: "11",
+            fullName: "Missing Player",
+            position: "RB",
+            overallAdp: 20,
+            positionalAdp: 8
+          }
+        ]
+      },
+      [
+        {
+          id: "canonical-10",
+          fullName: "Matched Player",
+          position: "WR",
+          externalIds: [{ provider: "fantasy-football-calculator", value: "10" }]
+        }
+      ]
+    );
+    expect(result.records).toEqual([
+      { playerId: "canonical-10", overallAdp: 12, positionalAdp: 5 }
+    ]);
+    expect(result.unresolved.map((record) => record.providerPlayerId)).toEqual(["11"]);
   });
 });

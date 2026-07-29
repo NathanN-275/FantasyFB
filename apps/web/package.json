@@ -20,6 +20,7 @@
     "@fantasyfb/expert-data": "workspace:*",
     "@fantasyfb/league-gateway": "workspace:*",
     "@fantasyfb/news-intelligence": "workspace:*",
+    "@fantasyfb/observability": "workspace:*",
     "@fantasyfb/player-intelligence": "workspace:*",
     "@fantasyfb/trade-engine": "workspace:*",
     "@fantasyfb/ui": "workspace:*",

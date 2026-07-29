@@ -66,15 +66,21 @@ def main() -> None:
     print(
         json.dumps(
             {
-                "run_id": run.run_id,
-                "target_season": run.target_season,
-                "projection_count": len(run.projections),
-                "model_version": run.model_version,
-                "feature_version": run.feature_version,
-                "training_range": [
-                    run.training_start_season,
-                    run.training_end_season,
-                ],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "level": "info",
+                "component": "projection-generation",
+                "event": "projection.run.completed",
+                "run": {
+                    "run_id": run.run_id,
+                    "target_season": run.target_season,
+                    "projection_count": len(run.projections),
+                    "model_version": run.model_version,
+                    "feature_version": run.feature_version,
+                    "training_range": [
+                        run.training_start_season,
+                        run.training_end_season,
+                    ],
+                },
             },
             sort_keys=True,
         )

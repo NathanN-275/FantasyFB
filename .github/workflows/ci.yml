@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -32,7 +36,39 @@ jobs:
       - run: pnpm test
       - run: pnpm test:python
       - run: pnpm build
-      - run: pnpm db:validate
+      - name: Validate migration journal and SQL files
+        run: pnpm db:migrations:check
+      - name: Validate optional CI Neon connection
+        env:
+          DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+        run: pnpm db:validate
+      - name: Apply migrations to the disposable CI database
+        if: vars.ENABLE_CI_DATABASE_TESTS == 'true'
+        env:
+          TEST_DATABASE_URL: ${{ secrets.CI_DATABASE_URL }}
+        run: pnpm --filter @fantasyfb/database exec vitest run src/migration-execution.test.ts
+  browser-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @fantasyfb/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
   secret-scan:
     runs-on: ubuntu-latest
     steps:
