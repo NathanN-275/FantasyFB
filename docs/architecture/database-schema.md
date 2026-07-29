@@ -16,6 +16,10 @@ Players have canonical UUIDs. `player_external_ids` provides a unique `(provider
 
 ## Drafts and limitations
 
-Draft state is append-only: each event has a per-draft sequence and idempotency key, both database-enforced unique. The repository verifies draft ownership before reading or appending events. State reduction, provider polling, and live synchronization belong to later prompts.
+Draft state is append-only: each event has a per-draft sequence and idempotency key, both
+database-enforced unique. The repository verifies draft ownership before reading or appending
+events. `@fantasyfb/draft-room` stores a versioned normalized event envelope in `payload`, derives
+current state by deterministic replay, and keeps Sleeper, manual, fixture, and companion sources
+outside the database adapter. See [Draft Event Engine](./draft-event-engine.md).
 
 `pnpm db:test:reset` is intentionally destructive only to `TEST_DATABASE_URL`; it refuses to run if that URL equals `DATABASE_URL`. A migration-execution integration test is skipped unless the same isolated test URL is configured.

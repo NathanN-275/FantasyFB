@@ -47,3 +47,9 @@ portable JSON. Unknown provider scoring or roster fields remain explicit warning
 never fabricate fallback data, and ESPN automation remains unavailable. See the
 [League Gateway architecture](./league-gateway.md) and
 [Sleeper source review](../data-sources/sleeper-api.md).
+
+`@fantasyfb/draft-room` owns append-only draft events and deterministic state replay. It accepts
+manual, fixture, documented Sleeper polling, and versioned future ESPN companion events through one
+normalized model. Provider failures and stale responses preserve the last replayable state, and
+React renders only reduced board, roster, and availability state. See the
+[Draft Event Engine architecture](./draft-event-engine.md).

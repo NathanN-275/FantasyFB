@@ -9,6 +9,7 @@ export default function PublicHomePage() {
         </Link>
         <div className="nav-links">
           <Link href="/players">Players</Link>
+          <Link href="/draft-demo">Draft demo</Link>
           <Link href="/sign-in">Private workspace</Link>
         </div>
       </nav>
@@ -18,12 +19,15 @@ export default function PublicHomePage() {
           <p className="eyebrow">PUBLIC DEMO · SAMPLE DATA ONLY</p>
           <h1>Draft with a point of view.</h1>
           <p>
-            Transparent player intelligence for the 2026 season - projections, ranks, risk, ADP,
-            and every source behind the call.
+            Transparent player intelligence for the 2026 season - projections, ranks, risk, ADP, and
+            every source behind the call.
           </p>
           <div className="hero-actions">
             <Link className="button-link" href="/players">
               Explore player research
+            </Link>
+            <Link className="text-link" href="/draft-demo">
+              Run the draft simulator
             </Link>
             <Link className="text-link" href="/sign-in">
               Sign in to the private workspace
@@ -45,7 +49,9 @@ export default function PublicHomePage() {
         <article>
           <span>01</span>
           <h2>One evaluation</h2>
-          <p>History, projections, rankings, ADP, injury context, news, and freshness in one view.</p>
+          <p>
+            History, projections, rankings, ADP, injury context, news, and freshness in one view.
+          </p>
         </article>
         <article>
           <span>02</span>
@@ -55,7 +61,9 @@ export default function PublicHomePage() {
         <article>
           <span>03</span>
           <h2>Trust the label</h2>
-          <p>Missing, stale, private, and synthetic inputs are never passed off as current facts.</p>
+          <p>
+            Missing, stale, private, and synthetic inputs are never passed off as current facts.
+          </p>
         </article>
       </section>
     </main>
