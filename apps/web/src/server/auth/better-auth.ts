@@ -16,7 +16,11 @@ import {
 } from "@fantasyfb/authentication";
 import { betterAuth } from "better-auth";
 import { headers } from "next/headers";
-import { publicEnvironment, requireAuthenticationEnvironment, requireDatabaseEnvironment } from "../env";
+import {
+  publicEnvironment,
+  requireAuthenticationEnvironment,
+  requireDatabaseEnvironment
+} from "../env";
 
 const githubProvider = "github";
 

@@ -4,7 +4,9 @@ import { BetterAuthProvider } from "./better-auth";
 describe("Better Auth provider authorization", () => {
   it("permits an authenticated GitHub account whose immutable ID is allowlisted", async () => {
     const provider = new BetterAuthProvider({
-      getSession: async () => ({ user: { id: "user-id", name: "Nathan", email: "nathan@example.com" } }),
+      getSession: async () => ({
+        user: { id: "user-id", name: "Nathan", email: "nathan@example.com" }
+      }),
       findGitHubAccountId: async () => "12345",
       allowedGitHubUserIds: new Set(["12345"])
     });

@@ -66,3 +66,9 @@ replacement levels, and reports package consolidation, scarcity, risk, confidenc
 full-season effects without a mystery fairness score. Public analysis uses synthetic fixtures;
 private saves re-evaluate server-side and persist through an authorized repository. See the
 [Trade Engine architecture](./trade-engine.md).
+
+`@fantasyfb/news-intelligence` validates explicitly permitted JSON feeds, deduplicates and matches
+entities, separates reported fields from generated fantasy interpretation, and preserves the last
+valid source snapshot on failure. Scheduled GitHub Actions persist versioned public records through
+`NewsRepository`; no external source is enabled without a documented reuse review. See
+[News Intelligence](./news-intelligence.md).

@@ -23,7 +23,8 @@
     "db:migrate": "pnpm --filter @fantasyfb/database db:migrate",
     "db:validate": "pnpm --filter @fantasyfb/database db:validate",
     "db:seed": "pnpm --filter @fantasyfb/database db:seed",
-    "db:test:reset": "pnpm --filter @fantasyfb/database db:test:reset"
+    "db:test:reset": "pnpm --filter @fantasyfb/database db:test:reset",
+    "news:ingest": "pnpm --filter @fantasyfb/news-pipeline ingest"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

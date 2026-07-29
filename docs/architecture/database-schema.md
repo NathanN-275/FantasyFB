@@ -31,3 +31,15 @@ browser cannot choose it. A referenced league configuration is checked against t
 before insert. The stored side definitions and complete normalized result preserve the assumptions
 and warnings used for the evaluation, while `list` filters and orders records only within the
 authorized account. Public trade demonstrations do not use this repository.
+
+## News snapshots
+
+`NewsRepository.saveSnapshot` stores each successful retrieval as a public or sample dataset version.
+Normalized records retain source attribution, original links, nullable publication time, retrieval
+time, permitted excerpts, facts, interpretation reasoning, entity confidence, category, and
+freshness. A global deduplication key lets later snapshots refresh an existing story without
+republishing it. Player relationships are normalized in `player_news`; related team evidence remains
+versioned JSON on the story.
+
+The ingestion shell reads the last valid source snapshot before retrieval. Failed or malformed feeds
+do not write a replacement dataset, so the prior valid records remain queryable.

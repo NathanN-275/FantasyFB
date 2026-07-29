@@ -61,6 +61,9 @@ importers:
       '@fantasyfb/league-gateway':
         specifier: workspace:*
         version: link:../../modules/league-gateway
+      '@fantasyfb/news-intelligence':
+        specifier: workspace:*
+        version: link:../../modules/news-intelligence
       '@fantasyfb/player-intelligence':
         specifier: workspace:*
         version: link:../../modules/player-intelligence
@@ -164,7 +167,15 @@ importers:
         specifier: ^3.1.2
         version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
-  modules/news-intelligence: {}
+  modules/news-intelligence:
+    dependencies:
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/player-intelligence:
     dependencies:
@@ -264,6 +275,25 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.7
+
+  pipelines/news:
+    dependencies:
+      '@fantasyfb/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@fantasyfb/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@fantasyfb/news-intelligence':
+        specifier: workspace:*
+        version: link:../../modules/news-intelligence
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.19.3
+        version: 4.23.1
 
 packages:
 

@@ -11,7 +11,8 @@ async function migrationSql() {
     "0002_authentication_sessions.sql",
     "0003_organic_leo.sql",
     "0004_projection-engine-v1.sql",
-    "0005_expert-imports-adp-snapshots.sql"
+    "0005_expert-imports-adp-snapshots.sql",
+    "0006_wise_loa.sql"
   ];
   return Promise.all(
     files.map((file) => readFile(fileURLToPath(new URL(file, migrationDirectory)), "utf8"))
@@ -72,6 +73,11 @@ describe("initial database migrations", () => {
     expect(sql).toContain("expert_import_rows_matched_player_required");
     expect(sql).toContain("adp_snapshots_provider_context_time_index");
     expect(sql).toContain("adp_snapshots_pick_bounds_valid");
+    expect(sql).toContain("news_records_deduplication_key_unique");
+    expect(sql).toContain("news_records_entity_confidence_valid");
+    expect(sql).toContain("news_data_freshness");
+    expect(sql).toContain('ALTER TYPE "public"."news_type" ADD VALUE \'contract\'');
+    expect(sql).toContain('ALTER TYPE "public"."news_type" ADD VALUE \'suspension\'');
     expect(sql).toContain('REFERENCES "public"."players"');
     expect(sql).toContain('REFERENCES "public"."user_accounts"');
   });

@@ -8,3 +8,6 @@ Fantasy Football Calculator ADP is enabled through its documented JSON REST API.
 attribution, coverage, and update-frequency review is recorded in
 [`fantasy-football-calculator-adp.md`](./fantasy-football-calculator-adp.md). Private CSV imports
 record their source and remain scoped to the authorized owner.
+
+News aggregation has no built-in third-party source. Its permission gate, source-review checklist,
+and supported JSON Feed boundary are documented in [`news-feeds.md`](./news-feeds.md).

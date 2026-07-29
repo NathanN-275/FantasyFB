@@ -1208,6 +1208,186 @@ h2 {
   margin-bottom: 0;
 }
 
+.news-shell {
+  max-width: 1180px;
+}
+
+.news-hero {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.news-filter-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 8px 8px 0 var(--mint-dark);
+  margin: 2rem 0 3rem;
+  padding: 1.5rem;
+}
+
+.news-feed {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.news-story {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 1.6rem;
+}
+
+.news-story:hover {
+  border-color: var(--line-strong);
+}
+
+.news-story h2 {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  letter-spacing: -0.02em;
+  margin: 0.8rem 0 0.45rem;
+  text-transform: uppercase;
+}
+
+.news-story h2 a {
+  text-decoration-color: var(--mint);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+.news-story-meta,
+.news-entities,
+.news-story footer {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.news-story-meta {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.news-category,
+.news-entities a,
+.news-entities span {
+  border: 1px solid var(--line-strong);
+  display: inline-flex;
+  padding: 0.3rem 0.5rem;
+}
+
+.news-category {
+  color: var(--gold);
+}
+
+.news-category-injury,
+.news-category-suspension {
+  color: var(--orange);
+}
+
+.news-category-transaction,
+.news-category-depth_chart {
+  color: var(--mint);
+}
+
+.news-attribution {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+.news-entities {
+  margin: 1rem 0 1.35rem;
+}
+
+.news-entities a,
+.news-entities span {
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.news-entities a:hover {
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
+.news-evidence-grid {
+  border-block: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.news-evidence-grid > section {
+  padding: 1.25rem 1.25rem 1.25rem 0;
+}
+
+.news-evidence-grid > section + section {
+  border-left: 1px solid var(--line);
+  padding-left: 1.25rem;
+}
+
+.news-evidence-grid p:not(.section-kicker),
+.news-evidence-grid li {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.news-evidence-grid details {
+  color: var(--mint);
+  font-size: 0.86rem;
+}
+
+.news-evidence-grid summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.news-evidence-grid ul {
+  margin-bottom: 0;
+  padding-left: 1.1rem;
+}
+
+.explicit-designation {
+  border-left: 3px solid var(--orange);
+  padding-left: 0.75rem;
+}
+
+.news-story footer {
+  justify-content: space-between;
+  padding-top: 1rem;
+}
+
+.news-story footer a {
+  color: var(--mint);
+  font-weight: 800;
+}
+
+.news-story footer span {
+  color: var(--dim);
+  font-size: 0.72rem;
+  max-width: 34rem;
+  text-align: right;
+}
+
+.empty-news-state {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 3rem;
+  text-align: center;
+}
+
+.empty-news-state h2 {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  text-transform: uppercase;
+}
+
 .news-date {
   color: var(--mint) !important;
   font-size: 0.65rem !important;
@@ -2165,7 +2345,15 @@ button.text-button.danger {
     padding-inline: 1rem;
   }
 
+  .site-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-block: 1rem;
+  }
+
   .nav-links {
+    flex-wrap: wrap;
     gap: 1rem;
   }
 
@@ -2456,6 +2644,31 @@ button.text-button.danger {
   .import-form,
   .import-form fieldset {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .news-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .news-evidence-grid > section {
+    padding-right: 0;
+  }
+
+  .news-evidence-grid > section + section {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    padding-left: 0;
+  }
+
+  .news-story footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .news-story footer span {
+    text-align: left;
   }
 }
 

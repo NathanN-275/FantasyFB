@@ -22,5 +22,10 @@ describe("repository authorization boundary", () => {
         visibility: "private"
       })
     ).rejects.toThrow("Private data access requires authorization context.");
+    await expect(
+      repositories.newsRepository.list({
+        visibility: "private"
+      })
+    ).rejects.toThrow("Private data access requires authorization context.");
   });
 });

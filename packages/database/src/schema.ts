@@ -76,9 +76,12 @@ export const newsType = pgEnum("news_type", [
   "injury",
   "transaction",
   "depth_chart",
+  "contract",
+  "suspension",
   "game",
   "general"
 ]);
+export const newsDataFreshness = pgEnum("news_data_freshness", ["current", "stale", "unknown"]);
 
 /** Auth is added in Prompt 4; these portable tables reserve the durable ownership boundary now. */
 export const userAccounts = pgTable(
@@ -808,14 +811,33 @@ export const newsRecords = pgTable(
       .notNull()
       .references(() => datasetVersions.id, { onDelete: "restrict" }),
     title: text("title").notNull(),
-    summary: text("summary").notNull(),
+    summary: text("summary"),
     sourceUrl: text("source_url").notNull(),
-    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    retrievedAt: timestamp("retrieved_at", { withTimezone: true }).notNull().defaultNow(),
     newsType: newsType("news_type").notNull().default("general"),
-    createdAt
+    reportedFacts: jsonb("reported_facts").notNull().default([]),
+    relatedTeams: jsonb("related_teams").notNull().default([]),
+    injuryInformation: jsonb("injury_information"),
+    fantasyRelevance: text("fantasy_relevance")
+      .notNull()
+      .default("No application-generated fantasy interpretation is available."),
+    interpretationReasoning: jsonb("interpretation_reasoning").notNull().default([]),
+    entityMatchConfidence: decimal("entity_match_confidence").notNull().default("0"),
+    dataFreshness: newsDataFreshness("data_freshness").notNull().default("unknown"),
+    deduplicationKey: text("deduplication_key").notNull(),
+    createdAt,
+    updatedAt
   },
   (table) => [
-    unique("news_records_dataset_source_url_unique").on(table.datasetVersionId, table.sourceUrl)
+    unique("news_records_dataset_source_url_unique").on(table.datasetVersionId, table.sourceUrl),
+    uniqueIndex("news_records_deduplication_key_unique").on(table.deduplicationKey),
+    index("news_records_category_published_index").on(table.newsType, table.publishedAt),
+    index("news_records_freshness_retrieved_index").on(table.dataFreshness, table.retrievedAt),
+    check(
+      "news_records_entity_confidence_valid",
+      sql`${table.entityMatchConfidence} >= 0 and ${table.entityMatchConfidence} <= 1`
+    )
   ]
 );
 
@@ -829,6 +851,7 @@ export const playerNews = pgTable(
       .notNull()
       .references(() => newsRecords.id, { onDelete: "cascade" }),
     relevance: decimal("relevance"),
+    matchedText: text("matched_text").notNull().default(""),
     createdAt
   },
   (table) => [

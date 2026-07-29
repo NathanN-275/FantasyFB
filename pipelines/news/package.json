@@ -1,0 +1,20 @@
+{
+  "name": "@fantasyfb/news-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx run-ingestion.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "@fantasyfb/contracts": "workspace:*",
+    "@fantasyfb/database": "workspace:*",
+    "@fantasyfb/news-intelligence": "workspace:*",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}

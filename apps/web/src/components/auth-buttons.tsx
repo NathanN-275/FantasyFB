@@ -8,7 +8,10 @@ export function GitHubSignInButton() {
 
   async function signIn() {
     setError(null);
-    const result = await authClient.signIn.social({ provider: "github", callbackURL: "/workspace" });
+    const result = await authClient.signIn.social({
+      provider: "github",
+      callbackURL: "/workspace"
+    });
     if (result.error) setError("GitHub sign-in could not be started. Please try again.");
   }
 

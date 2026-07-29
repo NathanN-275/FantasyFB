@@ -3,9 +3,8 @@
 FantasyFB is a personal-first fantasy football analysis platform for the 2026 NFL season. Its purpose is to turn league-specific settings, football data, projections, rankings, and draft activity into understandable recommendations—without coupling the core analysis to a particular league provider, data source, or deployment platform.
 
 The project is a modular monorepo with a provider-neutral football domain, tested scoring,
-projection, ranking, player-intelligence, league-gateway, and draft-event modules, a web
-application, and a PostgreSQL repository layer. Draft recommendations and multi-player trade
-analysis are implemented; news intelligence remains a planned capability.
+projection, ranking, player-intelligence, league-gateway, draft-event, trade, and news modules, a
+web application, and a PostgreSQL repository layer.
 
 ## Goal
 
@@ -21,22 +20,22 @@ Build a private workspace that helps its owner make better fantasy-football deci
 
 ## Current implementation and planned path
 
-| Capability                 | Status                 | Intended outcome                                                                                                                     |
-| -------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Public web shell           | Implemented            | A Next.js public demo using sample data only.                                                                                        |
-| Private workspace boundary | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                |
-| Canonical football domain  | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                  |
-| Scoring engine             | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                     |
-| Database foundation        | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news. |
-| Expert/ADP/private imports | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                   |
-| Projections                | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.         |
-| Rankings                   | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                     |
-| Player intelligence        | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.          |
-| League gateway             | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                 |
-| Draft event engine         | Implemented and tested | Append-only events, Sleeper/manual/fixture sources, deterministic replay, persistence, board controls, and stale/interrupted status. |
-| Draft recommendations      | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                          |
-| Multi-player trade engine  | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.         |
-| News analysis              | Planned                | Attributable aggregation from permitted sources with fact/interpretation separation.                                                 |
+| Capability                 | Status                 | Intended outcome                                                                                                                        |
+| -------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Public web shell           | Implemented            | A Next.js public demo using sample data only.                                                                                           |
+| Private workspace boundary | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                   |
+| Canonical football domain  | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                     |
+| Scoring engine             | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                        |
+| Database foundation        | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news.    |
+| Expert/ADP/private imports | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                      |
+| Projections                | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.            |
+| Rankings                   | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                        |
+| Player intelligence        | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.             |
+| League gateway             | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                    |
+| Draft event engine         | Implemented and tested | Append-only events, Sleeper/manual/fixture sources, deterministic replay, persistence, board controls, and stale/interrupted status.    |
+| Draft recommendations      | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                             |
+| Multi-player trade engine  | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.            |
+| News intelligence          | Implemented and tested | Permission-gated feeds, deduplication, entity/category filters, fact/interpretation separation, freshness, persistence, and scheduling. |
 
 ## Design choices
 
@@ -60,10 +59,13 @@ Build a private workspace that helps its owner make better fantasy-football deci
   synchronization state.
 - `modules/trade-engine` — deterministic multi-player package, lineup, bench, replacement, risk,
   and roster-context analysis.
+- `modules/news-intelligence` — permission-gated feed normalization, deduplication, entity matching,
+  filters, freshness, and separated fantasy interpretation.
 - `modules/*` — provider-independent capabilities for data cataloging, projections, rankings,
   player intelligence, leagues, drafts, trades, and news.
 - `packages/*` — shared contracts plus authentication, database, storage, observability, and UI infrastructure boundaries.
-- `pipelines` — Python pipeline foundations for historical data, projections, expert imports, and news.
+- `pipelines` — Python and TypeScript pipelines for historical data, projections, expert imports,
+  and scheduled news aggregation.
 - `docs` — architecture notes, design decisions, data-source requirements, and model methodology.
 
 ## Local setup

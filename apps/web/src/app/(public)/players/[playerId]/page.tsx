@@ -26,6 +26,7 @@ export default async function PlayerProfilePage({
         </Link>
         <div className="nav-links">
           <Link href="/players">Players</Link>
+          <Link href="/news">News</Link>
           <Link href="/sign-in">Private workspace</Link>
         </div>
       </nav>

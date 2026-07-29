@@ -57,7 +57,11 @@ export interface TradeRepository {
 }
 
 export interface NewsRepository {
+  listEntityCatalog(): Promise<NewsEntityCatalogRecord>;
+  list(input: VisibleNewsQuery): Promise<NewsRecord[]>;
   listForPlayer(input: VisiblePlayerQuery): Promise<NewsRecord[]>;
+  findLatestSourceSnapshot(sourceIdentifier: string): Promise<NewsSourceSnapshotRecord | undefined>;
+  saveSnapshot(input: NewNewsSnapshotRecord): Promise<SavedNewsSnapshotRecord>;
 }
 
 export interface ImportRepository {
@@ -138,6 +142,18 @@ export interface VisibleSeasonQuery {
 
 export interface VisiblePlayerQuery extends VisibleSeasonQuery {
   readonly playerId: string;
+}
+
+export interface VisibleNewsQuery {
+  readonly visibility: "public" | "sample" | "private";
+  readonly authorization?: AuthorizationContext;
+  readonly sourceIdentifier?: string;
+  readonly team?: string;
+  readonly position?: string;
+  readonly playerId?: string;
+  readonly categories?: readonly NewsCategory[];
+  readonly freshness?: NewsDataFreshness;
+  readonly limit?: number;
 }
 
 export interface HistoricalPlayerStatisticsQuery extends VisiblePlayerQuery {
@@ -226,9 +242,91 @@ export interface NewTradeEvaluationRecord {
 
 export interface NewsRecord {
   readonly id: string;
-  readonly title: string;
-  readonly summary: string;
-  readonly publishedAt: Date;
+  readonly deduplicationKey: string;
+  readonly headline: string;
+  readonly source: {
+    readonly id: string;
+    readonly name: string;
+    readonly feedUrl: string | null;
+    readonly usageNote: string | null;
+  };
+  readonly originalArticleUrl: string;
+  readonly publicationTime: Date | null;
+  readonly retrievedTime: Date;
+  readonly permittedExcerpt: string | null;
+  readonly reportedFacts: readonly string[];
+  readonly relatedPlayers: readonly {
+    readonly id: string;
+    readonly fullName: string;
+    readonly position: "QB" | "RB" | "WR" | "TE" | "K" | "DEF";
+    readonly currentTeam?: string;
+    readonly confidence: number;
+    readonly matchedText: string;
+  }[];
+  readonly relatedTeams: readonly {
+    readonly abbreviation: string;
+    readonly name: string;
+    readonly confidence: number;
+    readonly basis: "explicit-mention" | "current-player-team";
+  }[];
+  readonly category: NewsCategory;
+  readonly injuryInformation?: {
+    readonly reportedText: string;
+    readonly designation?:
+      "questionable" | "doubtful" | "out" | "injured-reserve" | "pup" | "suspended";
+  };
+  readonly fantasyRelevance: {
+    readonly text: string;
+    readonly reasoning: readonly string[];
+    readonly applicationGenerated: true;
+  };
+  readonly entityMatchConfidence: number;
+  readonly dataFreshness: NewsDataFreshness;
+}
+
+export type NewsCategory =
+  "injury" | "transaction" | "depth_chart" | "contract" | "suspension" | "game" | "general";
+
+export type NewsDataFreshness = "current" | "stale" | "unknown";
+
+export interface NewNewsSnapshotRecord {
+  readonly source: {
+    readonly name: string;
+    readonly sourceIdentifier: string;
+    readonly feedUrl: string;
+    readonly usageNote: string;
+  };
+  readonly datasetVersion: string;
+  readonly retrievedAt: Date;
+  readonly visibility: "public" | "sample";
+  readonly records: readonly Omit<NewsRecord, "id" | "source">[];
+}
+
+export interface NewsSourceSnapshotRecord {
+  readonly sourceId: string;
+  readonly sourceName: string;
+  readonly datasetVersion: string;
+  readonly retrievedAt: Date;
+  readonly records: readonly NewsRecord[];
+}
+
+export interface SavedNewsSnapshotRecord {
+  readonly datasetVersionId: string;
+  readonly persistedRecordCount: number;
+  readonly retrievedAt: Date;
+}
+
+export interface NewsEntityCatalogRecord {
+  readonly players: readonly {
+    readonly id: string;
+    readonly fullName: string;
+    readonly position: string;
+    readonly currentTeam?: string;
+  }[];
+  readonly teams: readonly {
+    readonly abbreviation: string;
+    readonly name: string;
+  }[];
 }
 
 export interface PrivateImportRecord {

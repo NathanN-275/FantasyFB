@@ -9,6 +9,7 @@ export default function PublicHomePage() {
         </Link>
         <div className="nav-links">
           <Link href="/players">Players</Link>
+          <Link href="/news">News</Link>
           <Link href="/draft-demo">Draft demo</Link>
           <Link href="/trade-demo">Trade analyzer</Link>
           <Link href="/sign-in">Private workspace</Link>
@@ -32,6 +33,9 @@ export default function PublicHomePage() {
             </Link>
             <Link className="text-link" href="/trade-demo">
               Compare a multi-player trade
+            </Link>
+            <Link className="text-link" href="/news">
+              Read the attributed sample news feed
             </Link>
             <Link className="text-link" href="/sign-in">
               Sign in to the private workspace

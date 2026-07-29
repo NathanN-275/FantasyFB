@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, sql, type InferSelectModel, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql, type InferSelectModel, type SQL } from "drizzle-orm";
 import type {
   AdpRepository,
   AuthorizationContext,
@@ -10,6 +10,8 @@ import type {
   ImportRepository,
   LeagueRepository,
   NewsRepository,
+  NewsRecord,
+  NewNewsSnapshotRecord,
   PlayerRepository,
   PlayerRecord,
   ProjectionRepository,
@@ -19,6 +21,7 @@ import type {
   StatsRepository,
   TradeRepository,
   VisiblePlayerQuery,
+  VisibleNewsQuery,
   VisibleSeasonQuery
 } from "@fantasyfb/contracts";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
@@ -530,25 +533,200 @@ export function createRepositories(database: Database): {
   };
 
   const newsRepository: NewsRepository = {
+    async listEntityCatalog() {
+      const [playerRows, teamRows] = await Promise.all([
+        database
+          .select({
+            id: players.id,
+            fullName: players.fullName,
+            position: players.position,
+            currentTeam: nflTeams.abbreviation
+          })
+          .from(players)
+          .leftJoin(nflTeams, eq(players.teamId, nflTeams.id))
+          .where(eq(players.active, true))
+          .orderBy(asc(players.fullName)),
+        database
+          .select({
+            abbreviation: nflTeams.abbreviation,
+            name: nflTeams.name
+          })
+          .from(nflTeams)
+          .where(eq(nflTeams.active, true))
+          .orderBy(asc(nflTeams.abbreviation))
+      ]);
+      return {
+        players: playerRows.map((player) => ({
+          id: player.id,
+          fullName: player.fullName,
+          position: player.position,
+          ...(player.currentTeam ? { currentTeam: player.currentTeam } : {})
+        })),
+        teams: teamRows
+      };
+    },
+    async list(query) {
+      return listNews(database, query);
+    },
     async listForPlayer(query: VisiblePlayerQuery) {
-      const ownerUserId = requiredOwner(query.authorization, query.visibility);
-      const conditions: SQL[] = [
-        eq(playerNews.playerId, query.playerId),
-        eq(datasetVersions.visibility, query.visibility)
-      ];
-      if (ownerUserId) conditions.push(eq(datasetVersions.ownerUserId, ownerUserId));
-      return database
+      return listNews(database, {
+        playerId: query.playerId,
+        visibility: query.visibility,
+        ...(query.authorization ? { authorization: query.authorization } : {})
+      });
+    },
+    async findLatestSourceSnapshot(sourceIdentifier) {
+      const [latest] = await database
         .select({
-          id: newsRecords.id,
-          title: newsRecords.title,
-          summary: newsRecords.summary,
-          publishedAt: newsRecords.publishedAt
+          sourceId: dataSources.sourceIdentifier,
+          sourceName: dataSources.name,
+          datasetVersion: datasetVersions.version,
+          retrievedAt: datasetVersions.retrievedAt,
+          visibility: datasetVersions.visibility
         })
-        .from(playerNews)
-        .innerJoin(newsRecords, eq(playerNews.newsRecordId, newsRecords.id))
-        .innerJoin(datasetVersions, eq(newsRecords.datasetVersionId, datasetVersions.id))
-        .where(and(...conditions))
-        .orderBy(asc(newsRecords.publishedAt));
+        .from(datasetVersions)
+        .innerJoin(dataSources, eq(datasetVersions.dataSourceId, dataSources.id))
+        .where(
+          and(
+            eq(dataSources.sourceIdentifier, sourceIdentifier),
+            eq(datasetVersions.validationStatus, "valid")
+          )
+        )
+        .orderBy(desc(datasetVersions.retrievedAt))
+        .limit(1);
+      if (!latest || latest.visibility === "private") return undefined;
+      const records = await listNews(database, {
+        visibility: latest.visibility,
+        sourceIdentifier,
+        limit: 500
+      });
+      return {
+        sourceId: latest.sourceId,
+        sourceName: latest.sourceName,
+        datasetVersion: latest.datasetVersion,
+        retrievedAt: latest.retrievedAt,
+        records: records.filter((record) => record.source.id === sourceIdentifier)
+      };
+    },
+    async saveSnapshot(input: NewNewsSnapshotRecord) {
+      const [source] = await database
+        .insert(dataSources)
+        .values({
+          name: input.source.name,
+          sourceIdentifier: input.source.sourceIdentifier,
+          sourceUrl: input.source.feedUrl,
+          licenseOrUsageNote: input.source.usageNote
+        })
+        .onConflictDoUpdate({
+          target: [dataSources.name, dataSources.sourceIdentifier],
+          set: {
+            sourceUrl: input.source.feedUrl,
+            licenseOrUsageNote: input.source.usageNote,
+            updatedAt: sql`now()`
+          }
+        })
+        .returning({ id: dataSources.id });
+      if (!source) throw new Error("News data source could not be persisted.");
+
+      const datasetId = randomUUID();
+      const [insertedDataset] = await database
+        .insert(datasetVersions)
+        .values({
+          id: datasetId,
+          dataSourceId: source.id,
+          visibility: input.visibility,
+          version: input.datasetVersion,
+          retrievedAt: input.retrievedAt,
+          validationStatus: "valid",
+          freshnessStatus: input.records.some((record) => record.dataFreshness !== "current")
+            ? "stale"
+            : "valid",
+          recordCount: input.records.length,
+          licenseOrUsageNote: input.source.usageNote
+        })
+        .onConflictDoNothing()
+        .returning({ id: datasetVersions.id });
+      const persistedDatasetId =
+        insertedDataset?.id ??
+        (
+          await database
+            .select({ id: datasetVersions.id })
+            .from(datasetVersions)
+            .where(
+              and(
+                eq(datasetVersions.dataSourceId, source.id),
+                eq(datasetVersions.version, input.datasetVersion)
+              )
+            )
+            .limit(1)
+        )[0]?.id;
+      if (!persistedDatasetId) throw new Error("News dataset version could not be persisted.");
+
+      for (const record of input.records) {
+        const [saved] = await database
+          .insert(newsRecords)
+          .values({
+            datasetVersionId: persistedDatasetId,
+            title: record.headline,
+            summary: record.permittedExcerpt,
+            sourceUrl: record.originalArticleUrl,
+            publishedAt: record.publicationTime,
+            retrievedAt: record.retrievedTime,
+            newsType: record.category,
+            reportedFacts: [...record.reportedFacts],
+            relatedTeams: [...record.relatedTeams],
+            injuryInformation: record.injuryInformation ?? null,
+            fantasyRelevance: record.fantasyRelevance.text,
+            interpretationReasoning: [...record.fantasyRelevance.reasoning],
+            entityMatchConfidence: String(record.entityMatchConfidence),
+            dataFreshness: record.dataFreshness,
+            deduplicationKey: record.deduplicationKey,
+            updatedAt: input.retrievedAt
+          })
+          .onConflictDoUpdate({
+            target: newsRecords.deduplicationKey,
+            set: {
+              datasetVersionId: persistedDatasetId,
+              title: record.headline,
+              summary: record.permittedExcerpt,
+              sourceUrl: record.originalArticleUrl,
+              publishedAt: record.publicationTime,
+              retrievedAt: record.retrievedTime,
+              newsType: record.category,
+              reportedFacts: [...record.reportedFacts],
+              relatedTeams: [...record.relatedTeams],
+              injuryInformation: record.injuryInformation ?? null,
+              fantasyRelevance: record.fantasyRelevance.text,
+              interpretationReasoning: [...record.fantasyRelevance.reasoning],
+              entityMatchConfidence: String(record.entityMatchConfidence),
+              dataFreshness: record.dataFreshness,
+              updatedAt: input.retrievedAt
+            }
+          })
+          .returning({ id: newsRecords.id });
+        if (!saved) throw new Error("News record could not be persisted.");
+
+        await database.delete(playerNews).where(eq(playerNews.newsRecordId, saved.id));
+        if (record.relatedPlayers.length) {
+          await database
+            .insert(playerNews)
+            .values(
+              record.relatedPlayers.map((player) => ({
+                playerId: player.id,
+                newsRecordId: saved.id,
+                relevance: String(player.confidence),
+                matchedText: player.matchedText
+              }))
+            )
+            .onConflictDoNothing();
+        }
+      }
+
+      return {
+        datasetVersionId: persistedDatasetId,
+        persistedRecordCount: input.records.length,
+        retrievedAt: input.retrievedAt
+      };
     }
   };
 
@@ -963,6 +1141,187 @@ export function createRepositories(database: Database): {
   };
 }
 
+async function listNews(database: Database, query: VisibleNewsQuery): Promise<NewsRecord[]> {
+  if (query.categories?.length === 0) return [];
+  const ownerUserId = requiredOwner(query.authorization, query.visibility);
+  const conditions: SQL[] = [eq(datasetVersions.visibility, query.visibility)];
+  if (ownerUserId) conditions.push(eq(datasetVersions.ownerUserId, ownerUserId));
+  if (query.sourceIdentifier) {
+    conditions.push(eq(dataSources.sourceIdentifier, query.sourceIdentifier));
+  }
+  if (query.playerId) conditions.push(eq(playerNews.playerId, query.playerId));
+  if (query.position === "DEF") {
+    conditions.push(
+      sql`regexp_replace(upper(${players.position}), '[^A-Z]', '', 'g') in ('D', 'DEF', 'DST')`
+    );
+  } else if (query.position) {
+    conditions.push(eq(players.position, query.position));
+  }
+  if (query.categories?.length) {
+    conditions.push(inArray(newsRecords.newsType, [...query.categories]));
+  }
+  if (query.freshness) conditions.push(eq(newsRecords.dataFreshness, query.freshness));
+  if (query.team) {
+    conditions.push(
+      sql`${newsRecords.relatedTeams} @> ${JSON.stringify([
+        { abbreviation: query.team.toUpperCase() }
+      ])}::jsonb`
+    );
+  }
+
+  const rows = await database
+    .selectDistinct({
+      id: newsRecords.id,
+      deduplicationKey: newsRecords.deduplicationKey,
+      headline: newsRecords.title,
+      sourceId: dataSources.sourceIdentifier,
+      sourceName: dataSources.name,
+      feedUrl: dataSources.sourceUrl,
+      usageNote: dataSources.licenseOrUsageNote,
+      originalArticleUrl: newsRecords.sourceUrl,
+      publicationTime: newsRecords.publishedAt,
+      retrievedTime: newsRecords.retrievedAt,
+      permittedExcerpt: newsRecords.summary,
+      reportedFacts: newsRecords.reportedFacts,
+      relatedTeams: newsRecords.relatedTeams,
+      category: newsRecords.newsType,
+      injuryInformation: newsRecords.injuryInformation,
+      fantasyRelevance: newsRecords.fantasyRelevance,
+      interpretationReasoning: newsRecords.interpretationReasoning,
+      entityMatchConfidence: newsRecords.entityMatchConfidence,
+      dataFreshness: newsRecords.dataFreshness
+    })
+    .from(newsRecords)
+    .innerJoin(datasetVersions, eq(newsRecords.datasetVersionId, datasetVersions.id))
+    .innerJoin(dataSources, eq(datasetVersions.dataSourceId, dataSources.id))
+    .leftJoin(playerNews, eq(newsRecords.id, playerNews.newsRecordId))
+    .leftJoin(players, eq(playerNews.playerId, players.id))
+    .where(and(...conditions))
+    .orderBy(desc(newsRecords.publishedAt), desc(newsRecords.retrievedAt))
+    .limit(Math.min(Math.max(query.limit ?? 100, 1), 500));
+  if (!rows.length) return [];
+
+  const relationships = await database
+    .select({
+      newsRecordId: playerNews.newsRecordId,
+      id: players.id,
+      fullName: players.fullName,
+      position: players.position,
+      currentTeam: nflTeams.abbreviation,
+      relevance: playerNews.relevance,
+      matchedText: playerNews.matchedText
+    })
+    .from(playerNews)
+    .innerJoin(players, eq(playerNews.playerId, players.id))
+    .leftJoin(nflTeams, eq(players.teamId, nflTeams.id))
+    .where(
+      inArray(
+        playerNews.newsRecordId,
+        rows.map((row) => row.id)
+      )
+    );
+  const playersByRecord = new Map<string, NewsRecord["relatedPlayers"][number][]>();
+  for (const relationship of relationships) {
+    const related = playersByRecord.get(relationship.newsRecordId) ?? [];
+    related.push({
+      id: relationship.id,
+      fullName: relationship.fullName,
+      position: newsPosition(relationship.position),
+      ...(relationship.currentTeam ? { currentTeam: relationship.currentTeam } : {}),
+      confidence: Number(relationship.relevance ?? 0),
+      matchedText: relationship.matchedText
+    });
+    playersByRecord.set(relationship.newsRecordId, related);
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    deduplicationKey: row.deduplicationKey,
+    headline: row.headline,
+    source: {
+      id: row.sourceId,
+      name: row.sourceName,
+      feedUrl: row.feedUrl,
+      usageNote: row.usageNote
+    },
+    originalArticleUrl: row.originalArticleUrl,
+    publicationTime: row.publicationTime,
+    retrievedTime: row.retrievedTime,
+    permittedExcerpt: row.permittedExcerpt,
+    reportedFacts: stringArray(row.reportedFacts, "news reported facts"),
+    relatedPlayers: playersByRecord.get(row.id) ?? [],
+    relatedTeams: relatedNewsTeams(row.relatedTeams),
+    category: row.category,
+    ...(row.injuryInformation
+      ? { injuryInformation: newsInjuryInformation(row.injuryInformation) }
+      : {}),
+    fantasyRelevance: {
+      text: row.fantasyRelevance,
+      reasoning: stringArray(row.interpretationReasoning, "news interpretation reasoning"),
+      applicationGenerated: true
+    },
+    entityMatchConfidence: Number(row.entityMatchConfidence),
+    dataFreshness: row.dataFreshness
+  }));
+}
+
+function newsPosition(value: string): NewsRecord["relatedPlayers"][number]["position"] {
+  const normalized = value.toUpperCase().replace(/[^A-Z]/g, "");
+  if (normalized === "DST" || normalized === "D") return "DEF";
+  if (!["QB", "RB", "WR", "TE", "K", "DEF"].includes(normalized)) {
+    throw new Error(`News relationship has unsupported player position "${value}".`);
+  }
+  return normalized as NewsRecord["relatedPlayers"][number]["position"];
+}
+
+function newsInjuryInformation(value: unknown): NonNullable<NewsRecord["injuryInformation"]> {
+  const injury = unknownRecord(value, "News injury information");
+  if (typeof injury.reportedText !== "string") {
+    throw new Error("News injury information requires reported text.");
+  }
+  const designations = [
+    "questionable",
+    "doubtful",
+    "out",
+    "injured-reserve",
+    "pup",
+    "suspended"
+  ] as const;
+  if (
+    injury.designation !== undefined &&
+    !designations.includes(injury.designation as (typeof designations)[number])
+  ) {
+    throw new Error("News injury information contains an unsupported designation.");
+  }
+  return {
+    reportedText: injury.reportedText,
+    ...(injury.designation
+      ? { designation: injury.designation as (typeof designations)[number] }
+      : {})
+  };
+}
+
+function relatedNewsTeams(value: unknown): NewsRecord["relatedTeams"] {
+  if (!Array.isArray(value)) throw new Error("News related teams must be a JSON array.");
+  return value.map((entry) => {
+    const team = unknownRecord(entry, "related team");
+    if (
+      typeof team.abbreviation !== "string" ||
+      typeof team.name !== "string" ||
+      typeof team.confidence !== "number" ||
+      (team.basis !== "explicit-mention" && team.basis !== "current-player-team")
+    ) {
+      throw new Error("News related team has an invalid normalized shape.");
+    }
+    return {
+      abbreviation: team.abbreviation,
+      name: team.name,
+      confidence: team.confidence,
+      basis: team.basis
+    };
+  });
+}
+
 function numericStatisticValues(values: unknown): Record<string, number> {
   if (!values || typeof values !== "object" || Array.isArray(values)) {
     throw new Error("Historical statistic values must be a JSON object.");
@@ -1118,7 +1477,7 @@ function assertUniqueImportedRanks(rows: readonly NewExpertImportRowRecord[]): v
 
 function unknownRecord(value: unknown, label: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`Expert import ${label} must be a JSON object.`);
+    throw new Error(`${label} must be a JSON object.`);
   }
   return value as Record<string, unknown>;
 }
@@ -1126,14 +1485,14 @@ function unknownRecord(value: unknown, label: string): Record<string, unknown> {
 function stringRecord(value: unknown, label: string): Record<string, string> {
   const record = unknownRecord(value, label);
   if (Object.values(record).some((entry) => typeof entry !== "string")) {
-    throw new Error(`Expert import ${label} values must be strings.`);
+    throw new Error(`${label} values must be strings.`);
   }
   return record as Record<string, string>;
 }
 
 function stringArray(value: unknown, label: string): string[] {
   if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string")) {
-    throw new Error(`Expert import ${label} must be a string array.`);
+    throw new Error(`${label} must be a string array.`);
   }
   return value;
 }

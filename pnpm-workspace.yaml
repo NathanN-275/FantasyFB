@@ -2,6 +2,7 @@ packages:
   - apps/*
   - modules/*
   - packages/*
+  - pipelines/*
 
 allowBuilds:
   esbuild: true

@@ -1,0 +1,46 @@
+name: Scheduled news ingestion
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-news-ingestion
+  cancel-in-progress: false
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEWS_SOURCES_JSON: ${{ secrets.NEWS_SOURCES_JSON }}
+      NEWS_SOURCE_TOKENS_JSON: ${{ secrets.NEWS_SOURCE_TOKENS_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply portable PostgreSQL migrations
+        run: pnpm db:migrate
+      - name: Aggregate permitted news sources
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm news:ingest | tee news-ingestion-report.json
+      - name: Upload ingestion report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-ingestion-report
+          path: news-ingestion-report.json
+          if-no-files-found: warn

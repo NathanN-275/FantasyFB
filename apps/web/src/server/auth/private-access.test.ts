@@ -6,7 +6,9 @@ import {
   authorizePrivateAccess
 } from "./private-access";
 
-function providerFor(state: Awaited<ReturnType<AuthProvider["getAuthenticationState"]>>): AuthProvider {
+function providerFor(
+  state: Awaited<ReturnType<AuthProvider["getAuthenticationState"]>>
+): AuthProvider {
   return {
     getAuthenticationState: async () => state,
     getAuthorizedUser: async () => (state.status === "authorized" ? state.user : null)
@@ -15,9 +17,9 @@ function providerFor(state: Awaited<ReturnType<AuthProvider["getAuthenticationSt
 
 describe("private access enforcement", () => {
   it("rejects signed-out private requests", async () => {
-    await expect(authorizePrivateAccess(providerFor({ status: "signed-out" }))).rejects.toBeInstanceOf(
-      AuthenticationRequiredError
-    );
+    await expect(
+      authorizePrivateAccess(providerFor({ status: "signed-out" }))
+    ).rejects.toBeInstanceOf(AuthenticationRequiredError);
   });
 
   it("rejects authenticated but unauthorized private requests", async () => {
@@ -31,7 +33,12 @@ describe("private access enforcement", () => {
       authorizePrivateAccess(
         providerFor({
           status: "authorized",
-          user: { id: "user-id" as never, providerAccountId: "12345", displayName: null, email: null }
+          user: {
+            id: "user-id" as never,
+            providerAccountId: "12345",
+            displayName: null,
+            email: null
+          }
         })
       )
     ).resolves.toMatchObject({ providerAccountId: "12345" });

@@ -47,6 +47,7 @@ export default async function PlayerDirectoryPage({
           <Link aria-current="page" href="/players">
             Players
           </Link>
+          <Link href="/news">News</Link>
           <Link href="/draft-demo">Draft demo</Link>
           <Link href="/sign-in">Private workspace</Link>
         </div>

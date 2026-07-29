@@ -3,7 +3,9 @@ import type { AuthProvider } from "@fantasyfb/authentication";
 import { AuthenticationRequiredError, AuthorizationDeniedError } from "./private-access";
 import { readPrivateAccount, readPrivateWorkspaceIdentity } from "./private-resources";
 
-function providerFor(state: Awaited<ReturnType<AuthProvider["getAuthenticationState"]>>): AuthProvider {
+function providerFor(
+  state: Awaited<ReturnType<AuthProvider["getAuthenticationState"]>>
+): AuthProvider {
   return {
     getAuthenticationState: async () => state,
     getAuthorizedUser: async () => (state.status === "authorized" ? state.user : null)
@@ -12,9 +14,9 @@ function providerFor(state: Awaited<ReturnType<AuthProvider["getAuthenticationSt
 
 describe("protected server resources", () => {
   it("rejects a signed-out server action", async () => {
-    await expect(readPrivateWorkspaceIdentity(providerFor({ status: "signed-out" }))).rejects.toBeInstanceOf(
-      AuthenticationRequiredError
-    );
+    await expect(
+      readPrivateWorkspaceIdentity(providerFor({ status: "signed-out" }))
+    ).rejects.toBeInstanceOf(AuthenticationRequiredError);
   });
 
   it("rejects an unauthorized private API operation", async () => {
