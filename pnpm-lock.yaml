@@ -52,6 +52,9 @@ importers:
       '@fantasyfb/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@fantasyfb/draft-guide':
+        specifier: workspace:*
+        version: link:../../modules/draft-guide
       '@fantasyfb/draft-room':
         specifier: workspace:*
         version: link:../../modules/draft-room
@@ -107,6 +110,16 @@ importers:
       '@fantasyfb/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+
+  modules/draft-guide:
+    dependencies:
+      zod:
+        specifier: ^3.24.3
+        version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^3.1.2
+        version: 3.2.7(@types/node@22.20.1)(tsx@4.23.1)
 
   modules/draft-room:
     dependencies:

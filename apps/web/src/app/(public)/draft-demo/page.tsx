@@ -10,6 +10,7 @@ export default function DraftDemoPage() {
         </Link>
         <div className="nav-links">
           <Link href="/players">Players</Link>
+          <Link href="/draft-guide">Draft guide</Link>
           <Link aria-current="page" href="/draft-demo">
             Draft demo
           </Link>

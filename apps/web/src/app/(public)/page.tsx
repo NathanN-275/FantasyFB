@@ -10,6 +10,7 @@ export default function PublicHomePage() {
         <div className="nav-links">
           <Link href="/players">Players</Link>
           <Link href="/news">News</Link>
+          <Link href="/draft-guide">Draft guide</Link>
           <Link href="/draft-demo">Draft demo</Link>
           <Link href="/trade-demo">Trade analyzer</Link>
           <Link href="/sign-in">Private workspace</Link>
@@ -30,6 +31,9 @@ export default function PublicHomePage() {
             </Link>
             <Link className="text-link" href="/draft-demo">
               Run the draft simulator
+            </Link>
+            <Link className="text-link" href="/draft-guide">
+              Open the data-driven draft guide
             </Link>
             <Link className="text-link" href="/trade-demo">
               Compare a multi-player trade

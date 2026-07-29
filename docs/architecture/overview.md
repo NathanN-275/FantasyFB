@@ -72,3 +72,9 @@ entities, separates reported fields from generated fantasy interpretation, and p
 valid source snapshot on failure. Scheduled GitHub Actions persist versioned public records through
 `NewsRepository`; no external source is enabled without a documented reuse review. See
 [News Intelligence](./news-intelligence.md).
+
+`@fantasyfb/draft-guide` generates a complete guide from one validated, versioned input. The module
+owns league/scoring strategy, round targets, tiers, evidence-backed player callouts, roster
+construction, glossary, unavailable states, and build warnings. React renders the result as web,
+printable, and mobile views; player claims cannot be created without typed source references. See
+the [Draft Guide architecture](./draft-guide.md).

@@ -36,6 +36,7 @@ Build a private workspace that helps its owner make better fantasy-football deci
 | Draft recommendations      | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                             |
 | Multi-player trade engine  | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.            |
 | News intelligence          | Implemented and tested | Permission-gated feeds, deduplication, entity/category filters, fact/interpretation separation, freshness, persistence, and scheduling. |
+| Data-driven draft guide    | Implemented and tested | Versioned strategy, round targets, tiers, evidence-backed player callouts, print/mobile views, checklist, glossary, and source notes.   |
 
 ## Design choices
 
@@ -61,6 +62,8 @@ Build a private workspace that helps its owner make better fantasy-football deci
   and roster-context analysis.
 - `modules/news-intelligence` — permission-gated feed normalization, deduplication, entity matching,
   filters, freshness, and separated fantasy interpretation.
+- `modules/draft-guide` — deterministic, versioned guide generation with evidence-backed player
+  callouts, structured strategy, explicit unavailable states, and build warnings.
 - `modules/*` — provider-independent capabilities for data cataloging, projections, rankings,
   player intelligence, leagues, drafts, trades, and news.
 - `packages/*` — shared contracts plus authentication, database, storage, observability, and UI infrastructure boundaries.
