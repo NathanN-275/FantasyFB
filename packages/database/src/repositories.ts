@@ -15,6 +15,7 @@ import type {
   ProjectionRepository,
   RankingRepository,
   NewExpertImportRowRecord,
+  NewTradeEvaluationRecord,
   StatsRepository,
   TradeRepository,
   VisiblePlayerQuery,
@@ -83,6 +84,24 @@ async function assertOwnedDraft(
     .where(and(eq(drafts.id, draftId), eq(leagueConfigurations.ownerUserId, context.userId)))
     .limit(1);
   if (!draft) throw new Error("Draft was not found for the authorized user.");
+}
+
+async function assertOwnedLeague(
+  database: Database,
+  context: AuthorizationContext,
+  leagueConfigurationId: string
+) {
+  const [league] = await database
+    .select({ id: leagueConfigurations.id })
+    .from(leagueConfigurations)
+    .where(
+      and(
+        eq(leagueConfigurations.id, leagueConfigurationId),
+        eq(leagueConfigurations.ownerUserId, context.userId)
+      )
+    )
+    .limit(1);
+  if (!league) throw new Error("League configuration was not found for the authorized user.");
 }
 
 export function createRepositories(database: Database): {
@@ -469,11 +488,44 @@ export function createRepositories(database: Database): {
         .select({
           id: tradeEvaluations.id,
           status: tradeEvaluations.status,
+          leagueConfigurationId: tradeEvaluations.leagueConfigurationId,
           sideA: tradeEvaluations.sideA,
-          sideB: tradeEvaluations.sideB
+          sideB: tradeEvaluations.sideB,
+          result: tradeEvaluations.result,
+          createdAt: tradeEvaluations.createdAt,
+          updatedAt: tradeEvaluations.updatedAt
         })
         .from(tradeEvaluations)
-        .where(eq(tradeEvaluations.ownerUserId, context.userId));
+        .where(eq(tradeEvaluations.ownerUserId, context.userId))
+        .orderBy(desc(tradeEvaluations.createdAt));
+    },
+    async save(context, evaluation: NewTradeEvaluationRecord) {
+      if (evaluation.leagueConfigurationId) {
+        await assertOwnedLeague(database, context, evaluation.leagueConfigurationId);
+      }
+      const [saved] = await database
+        .insert(tradeEvaluations)
+        .values({
+          ownerUserId: context.userId,
+          leagueConfigurationId: evaluation.leagueConfigurationId,
+          status: evaluation.status ?? "evaluated",
+          sideA: evaluation.sideA,
+          sideB: evaluation.sideB,
+          result: evaluation.result,
+          updatedAt: new Date()
+        })
+        .returning({
+          id: tradeEvaluations.id,
+          status: tradeEvaluations.status,
+          leagueConfigurationId: tradeEvaluations.leagueConfigurationId,
+          sideA: tradeEvaluations.sideA,
+          sideB: tradeEvaluations.sideB,
+          result: tradeEvaluations.result,
+          createdAt: tradeEvaluations.createdAt,
+          updatedAt: tradeEvaluations.updatedAt
+        });
+      if (!saved) throw new Error("Trade evaluation was not persisted.");
+      return saved;
     }
   };
 

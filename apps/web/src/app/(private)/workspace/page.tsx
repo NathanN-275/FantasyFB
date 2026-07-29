@@ -2,6 +2,8 @@ import { SignOutButton } from "../../../components/auth-buttons";
 import { ExpertImportPanel } from "../../../components/expert-import-panel";
 import { DraftRoomPanel } from "../../../components/draft-room-panel";
 import { LeagueGatewayPanel } from "../../../components/league-gateway-panel";
+import { TradeAnalyzerPanel } from "../../../components/trade-analyzer-panel";
+import { TRADE_DEMO_INPUT } from "../../../fixtures/trade-evaluation";
 import { requireAuthorizedUser } from "../../../server/auth/private-access";
 import { getExpertDataStatus } from "../../../server/expert-data";
 
@@ -30,6 +32,11 @@ export default async function WorkspacePage() {
       </section>
       <LeagueGatewayPanel defaultSeason={currentSeason} />
       <DraftRoomPanel />
+      <TradeAnalyzerPanel
+        input={TRADE_DEMO_INPUT}
+        allowSave
+        fixtureLabel="Synthetic workflow fixture - saved evaluations remain private"
+      />
       <ExpertImportPanel expertStatus={expertStatus} defaultSeason={currentSeason} />
       <SignOutButton />
     </main>

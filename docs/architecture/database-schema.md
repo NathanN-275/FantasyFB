@@ -23,3 +23,11 @@ current state by deterministic replay, and keeps Sleeper, manual, fixture, and c
 outside the database adapter. See [Draft Event Engine](./draft-event-engine.md).
 
 `pnpm db:test:reset` is intentionally destructive only to `TEST_DATABASE_URL`; it refuses to run if that URL equals `DATABASE_URL`. A migration-execution integration test is skipped unless the same isolated test URL is configured.
+
+## Saved trade evaluations
+
+`TradeRepository.save` always supplies `owner_user_id` from the server authorization context; the
+browser cannot choose it. A referenced league configuration is checked against that same owner
+before insert. The stored side definitions and complete normalized result preserve the assumptions
+and warnings used for the evaluation, while `list` filters and orders records only within the
+authorized account. Public trade demonstrations do not use this repository.

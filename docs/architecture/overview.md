@@ -59,3 +59,10 @@ independent strategies use rankings, roster need, tiers, replacement value, ADP,
 and an interpretable expected-availability model without hiding the decision behind one score.
 Snake, third-round-reversal, keeper, and traded-pick context remain configuration-driven. See the
 [Draft Recommendation Engine architecture](./draft-recommendations.md).
+
+`@fantasyfb/trade-engine` owns deterministic multi-player analysis behind one validated interface.
+It globally optimizes both before-and-after starting lineups, values the bench above disclosed
+replacement levels, and reports package consolidation, scarcity, risk, confidence, short-term, and
+full-season effects without a mystery fairness score. Public analysis uses synthetic fixtures;
+private saves re-evaluate server-side and persist through an authorized repository. See the
+[Trade Engine architecture](./trade-engine.md).

@@ -4,8 +4,8 @@ FantasyFB is a personal-first fantasy football analysis platform for the 2026 NF
 
 The project is a modular monorepo with a provider-neutral football domain, tested scoring,
 projection, ranking, player-intelligence, league-gateway, and draft-event modules, a web
-application, and a PostgreSQL repository layer. Draft recommendations, trade analysis, and news
-intelligence remain planned capabilities.
+application, and a PostgreSQL repository layer. Draft recommendations and multi-player trade
+analysis are implemented; news intelligence remains a planned capability.
 
 ## Goal
 
@@ -34,8 +34,9 @@ Build a private workspace that helps its owner make better fantasy-football deci
 | Player intelligence        | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.          |
 | League gateway             | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                 |
 | Draft event engine         | Implemented and tested | Append-only events, Sleeper/manual/fixture sources, deterministic replay, persistence, board controls, and stale/interrupted status. |
-| Draft recommendations      | Planned                | League-aware recommendations built on the replayed draft state.                                                                      |
-| Trade and news analysis    | Planned                | Explainable trade evaluation and permitted news aggregation.                                                                         |
+| Draft recommendations      | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                          |
+| Multi-player trade engine  | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.         |
+| News analysis              | Planned                | Attributable aggregation from permitted sources with fact/interpretation separation.                                                 |
 
 ## Design choices
 
@@ -57,6 +58,8 @@ Build a private workspace that helps its owner make better fantasy-football deci
 - `modules/league-gateway` — provider-neutral league configuration, Sleeper read-only import, manual/ESPN profiles, and portable JSON.
 - `modules/draft-room` — append-only draft events, deterministic replay, provider polling, and
   synchronization state.
+- `modules/trade-engine` — deterministic multi-player package, lineup, bench, replacement, risk,
+  and roster-context analysis.
 - `modules/*` — provider-independent capabilities for data cataloging, projections, rankings,
   player intelligence, leagues, drafts, trades, and news.
 - `packages/*` — shared contracts plus authentication, database, storage, observability, and UI infrastructure boundaries.

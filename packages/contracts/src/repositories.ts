@@ -50,6 +50,10 @@ export interface DraftRepository {
 
 export interface TradeRepository {
   list(context: AuthorizationContext): Promise<TradeEvaluationRecord[]>;
+  save(
+    context: AuthorizationContext,
+    evaluation: NewTradeEvaluationRecord
+  ): Promise<TradeEvaluationRecord>;
 }
 
 export interface NewsRepository {
@@ -204,8 +208,20 @@ export interface DraftEventRecord extends NewDraftEventRecord {
 export interface TradeEvaluationRecord {
   readonly id: string;
   readonly status: "draft" | "evaluated" | "archived";
+  readonly leagueConfigurationId: string | null;
   readonly sideA: unknown;
   readonly sideB: unknown;
+  readonly result: unknown;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+}
+
+export interface NewTradeEvaluationRecord {
+  readonly leagueConfigurationId?: string;
+  readonly status?: "draft" | "evaluated" | "archived";
+  readonly sideA: unknown;
+  readonly sideB: unknown;
+  readonly result: unknown;
 }
 
 export interface NewsRecord {

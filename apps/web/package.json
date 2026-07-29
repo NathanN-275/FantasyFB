@@ -19,6 +19,7 @@
     "@fantasyfb/expert-data": "workspace:*",
     "@fantasyfb/league-gateway": "workspace:*",
     "@fantasyfb/player-intelligence": "workspace:*",
+    "@fantasyfb/trade-engine": "workspace:*",
     "@fantasyfb/ui": "workspace:*",
     "better-auth": "^1.6.23",
     "next": "^15.3.0",
