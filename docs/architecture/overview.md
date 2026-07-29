@@ -53,3 +53,9 @@ manual, fixture, documented Sleeper polling, and versioned future ESPN companion
 normalized model. Provider failures and stale responses preserve the last replayable state, and
 React renders only reduced board, roster, and availability state. See the
 [Draft Event Engine architecture](./draft-event-engine.md).
+
+The same package exposes a pure draft recommendation interface over that reduced state. Six
+independent strategies use rankings, roster need, tiers, replacement value, ADP, risk, bye weeks,
+and an interpretable expected-availability model without hiding the decision behind one score.
+Snake, third-round-reversal, keeper, and traded-pick context remain configuration-driven. See the
+[Draft Recommendation Engine architecture](./draft-recommendations.md).

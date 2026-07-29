@@ -70,6 +70,10 @@ includes:
 Real private draft events use the authenticated repository endpoint. The public simulator is an
 interaction and layout fixture, not a fallback for provider or database failure.
 
+Reduced state is also the draft-history input to the
+[Draft Recommendation Engine](./draft-recommendations.md). Recommendation logic does not mutate the
+event log and does not need to know which source produced a normalized selection.
+
 ## Verification
 
 Module tests cover deterministic replay, out-of-order correction references, duplicate delivery,

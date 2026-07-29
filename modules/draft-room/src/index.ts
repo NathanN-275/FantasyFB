@@ -176,6 +176,17 @@ export function createDraftRoom(dependencies: {
 
 export { replayDraftEvents } from "./reducer.js";
 export {
+  createDraftRecommendationEngine,
+  DRAFT_RECOMMENDATION_STRATEGIES,
+  DraftRecommendationEngine,
+  type DraftRecommendation,
+  type DraftRecommendationInput,
+  type DraftRecommendationPlayer,
+  type DraftRecommendationPosition,
+  type DraftRecommendationResult,
+  type DraftRecommendationStrategy
+} from "./recommendations.js";
+export {
   createFixtureDraftSource,
   createManualDraftEvent,
   createSleeperPollingSource,

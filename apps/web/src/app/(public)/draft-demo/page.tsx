@@ -21,8 +21,8 @@ export default function DraftDemoPage() {
           <p className="eyebrow">PUBLIC DEMO · FICTIONAL FIXTURE DATA ONLY</p>
           <h1>Draft command center</h1>
           <p className="hero-copy">
-            Test fast manual entry, provider polling, corrections, undo, and deterministic replay
-            without connecting a real league.
+            Test explained recommendations, next-pick forecasts, fast manual entry, provider
+            polling, corrections, undo, and deterministic replay without connecting a real league.
           </p>
         </div>
         <div className="season-stamp" aria-label="Append-only draft simulator">

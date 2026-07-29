@@ -1414,6 +1414,334 @@ h2 {
   margin-left: auto;
 }
 
+.recommendation-shell {
+  background:
+    radial-gradient(circle at 85% 0%, rgb(42 119 88 / 18%), transparent 34%), var(--surface);
+  border: 1px solid var(--line);
+  margin-bottom: 1.5rem;
+}
+
+.recommendation-heading {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  padding: 1.4rem 1.5rem;
+}
+
+.recommendation-heading h3 {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.75rem;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.recommendation-heading p:not(.section-kicker) {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0.55rem 0 0;
+  max-width: 750px;
+}
+
+.recommendation-badges {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recommendation-badges span,
+.recommendation-footer span {
+  border: 1px solid var(--line-strong);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0.55rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.forecast-ribbon {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.forecast-ribbon > div {
+  border-right: 1px solid var(--line);
+  padding: 1rem 1.3rem;
+}
+
+.forecast-ribbon > div:last-child {
+  border-right: 0;
+}
+
+.forecast-ribbon span,
+.forecast-ribbon small {
+  color: var(--dim);
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.forecast-ribbon strong {
+  display: block;
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.35rem;
+  margin: 0.4rem 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recommendation-card {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.recommendation-card:nth-child(3n) {
+  border-right: 0;
+}
+
+.recommendation-card-selected {
+  background: var(--mint-dark);
+  box-shadow: inset 0 3px 0 var(--mint);
+}
+
+.recommendation-card header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.recommendation-card header > span:first-child {
+  color: var(--mint);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recommendation-card .position-chip {
+  height: 30px;
+  margin: 0;
+  width: 36px;
+}
+
+.recommendation-card h4 {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.45rem;
+  margin: 1rem 0 0.4rem;
+  text-transform: uppercase;
+}
+
+.recommendation-card > p {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  min-height: 3.5em;
+}
+
+.recommendation-card dl {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1rem 0;
+}
+
+.recommendation-card dl div {
+  padding: 0.65rem 0.3rem 0.65rem 0;
+}
+
+.recommendation-card dt {
+  color: var(--dim);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.recommendation-card dd {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.05rem;
+  margin: 0.22rem 0 0;
+  text-transform: uppercase;
+}
+
+.recommendation-card details {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.recommendation-card summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.recommendation-card details ul {
+  padding-left: 1.2rem;
+}
+
+.recommendation-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.recommendation-actions button {
+  min-height: 34px;
+  padding: 0.4rem 0.6rem;
+}
+
+.recommendation-actions button.text-button {
+  margin-left: auto;
+}
+
+.recommendation-support-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recommendation-support-grid > section {
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+
+.recommendation-support-grid > section:last-child {
+  border-right: 0;
+}
+
+.recommendation-support-grid h4 {
+  font-family: "Arial Narrow", Impact, sans-serif;
+  font-size: 1.15rem;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.roster-needs-list {
+  padding: 0.65rem 1.3rem 1.2rem;
+}
+
+.roster-needs-list > div {
+  align-items: center;
+  display: grid;
+  font-size: 0.72rem;
+  font-weight: 800;
+  gap: 0.7rem;
+  grid-template-columns: 32px 48px 1fr;
+  padding: 0.48rem 0;
+}
+
+.roster-needs-list progress {
+  accent-color: var(--mint);
+  height: 7px;
+  width: 100%;
+}
+
+.recommendation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recommendation-list li {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 0.7rem;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0.5rem 1.3rem;
+}
+
+.recommendation-list li > button:first-child {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font-family: inherit;
+  letter-spacing: 0;
+  padding: 0;
+  text-align: left;
+  text-transform: none;
+}
+
+.recommendation-list span,
+.recommendation-list small {
+  display: block;
+}
+
+.recommendation-list small {
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.recommendation-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.9rem 1.3rem;
+}
+
+.recommendation-footer > div {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.recommendation-footer strong {
+  font-size: 0.7rem;
+  margin-right: 0.25rem;
+  text-transform: uppercase;
+}
+
+.recommendation-footer p {
+  color: var(--muted);
+  font-size: 0.68rem;
+  margin: 0;
+  max-width: 420px;
+  text-align: right;
+}
+
+.recommendation-footer .freshness-fresh {
+  border-color: #29644e;
+  color: var(--mint);
+}
+
+.recommendation-footer .freshness-stale {
+  border-color: #6b4a15;
+  color: var(--gold);
+}
+
+.recommendation-footer .freshness-unavailable {
+  color: var(--red);
+}
+
+.tier-warning {
+  background: #23190a;
+  border-top: 1px solid #6b4a15;
+  color: var(--gold);
+  padding: 1rem 1.3rem;
+}
+
+.tier-warning ul {
+  margin-bottom: 0;
+}
+
 button.secondary-button {
   background: transparent;
   border-color: var(--line-strong);
@@ -1529,6 +1857,12 @@ button.secondary-button:hover {
   letter-spacing: 0.07em;
   padding: 1rem 1.3rem;
   text-transform: uppercase;
+}
+
+.draft-player-filter-row {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr) 150px;
 }
 
 .available-player-list {
@@ -1739,6 +2073,18 @@ button.text-button.danger {
   .draft-workspace-grid {
     grid-template-columns: 1fr;
   }
+
+  .recommendation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recommendation-card:nth-child(3n) {
+    border-right: 1px solid var(--line);
+  }
+
+  .recommendation-card:nth-child(2n) {
+    border-right: 0;
+  }
 }
 
 @media (max-width: 800px) {
@@ -1754,7 +2100,9 @@ button.text-button.danger {
 
   .draft-room-heading,
   .draft-board-header,
-  .draft-control-bar {
+  .draft-control-bar,
+  .recommendation-heading,
+  .recommendation-footer {
     align-items: stretch;
     flex-direction: column;
   }
@@ -1770,6 +2118,33 @@ button.text-button.danger {
 
   .draft-board {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .forecast-ribbon,
+  .recommendation-grid,
+  .recommendation-support-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-ribbon > div,
+  .recommendation-card,
+  .recommendation-card:nth-child(2n),
+  .recommendation-card:nth-child(3n),
+  .recommendation-support-grid > section {
+    border-right: 0;
+  }
+
+  .recommendation-badges {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+
+  .recommendation-footer p {
+    text-align: left;
+  }
+
+  .draft-player-filter-row {
+    grid-template-columns: 1fr;
   }
 
   .draft-rosters article {
