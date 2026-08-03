@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@fantasyfb/contracts": "workspace:*",
-    "zod": "^3.24.3"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "vitest": "^3.1.2"
