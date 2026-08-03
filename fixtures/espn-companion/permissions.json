@@ -1,0 +1,11 @@
+{
+  "label": "Synthetic proposed permission fixture; not an installable manifest",
+  "synthetic": true,
+  "permissions": ["storage"],
+  "hostPermissions": [
+    "https://fantasy.espn.com/*",
+    "https://fantasyfb.example.invalid/api/private/companion/*"
+  ],
+  "contentScriptMatches": ["https://fantasy.espn.com/football/draft*"],
+  "prohibitedPermissions": ["cookies", "history", "tabs", "webRequest", "webRequestBlocking"]
+}

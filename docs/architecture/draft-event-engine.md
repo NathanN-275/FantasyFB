@@ -47,8 +47,10 @@ cache, but the event log remains authoritative and any snapshot must be reproduc
   stale, and makes rate limiting and interruptions explicit.
 - Manual entry produces validated manual events and remains independent from provider availability.
 - The fixture source emits deterministic batches for tests and the public sample simulator.
-- The versioned ESPN companion contract normalizes future trusted companion messages. It does not
-  scrape ESPN, request cookies, or inspect browser sessions.
+- The versioned ESPN companion contract strictly evaluates future untrusted companion messages
+  against enable state, pairing-bound draft identity, observer compatibility, duplicate IDs, and
+  player-resolution certainty. It does not scrape ESPN, request cookies, or inspect browser
+  sessions. See the [companion architecture](./espn-companion.md).
 
 A synchronization attempt returns `live`, `stale`, `interrupted`, or `completed` status with a
 human-readable detail and check time. An interruption leaves the last persisted replayed state
@@ -79,4 +81,6 @@ event log and does not need to know which source produced a normalized selection
 Module tests cover deterministic replay, out-of-order correction references, duplicate delivery,
 undo, keepers, traded picks, missing mappings, mapping resolution, conflicting picks, fixture
 synchronization, Sleeper correction/staleness behavior, interrupted providers, and the ESPN
-companion contract. Web route tests cover authorization, private reads, and route-scoped appends.
+companion contract, including strict unknown-key rejection, version/draft checks, duplicates,
+emergency disable, unsupported status, and uncertain-player confirmation. Web route tests cover
+authorization, private reads, and route-scoped appends.

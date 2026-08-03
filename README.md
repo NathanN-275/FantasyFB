@@ -20,23 +20,25 @@ Build a private workspace that helps its owner make better fantasy-football deci
 
 ## Current implementation and planned path
 
-| Capability                 | Status                 | Intended outcome                                                                                                                        |
-| -------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Public web shell           | Implemented            | A Next.js public demo using sample data only.                                                                                           |
-| Private workspace boundary | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                   |
-| Canonical football domain  | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                     |
-| Scoring engine             | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                        |
-| Database foundation        | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news.    |
-| Expert/ADP/private imports | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                      |
-| Projections                | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.            |
-| Rankings                   | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                        |
-| Player intelligence        | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.             |
-| League gateway             | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                    |
-| Draft event engine         | Implemented and tested | Append-only events, Sleeper/manual/fixture sources, deterministic replay, persistence, board controls, and stale/interrupted status.    |
-| Draft recommendations      | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                             |
-| Multi-player trade engine  | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.            |
-| News intelligence          | Implemented and tested | Permission-gated feeds, deduplication, entity/category filters, fact/interpretation separation, freshness, persistence, and scheduling. |
-| Data-driven draft guide    | Implemented and tested | Versioned strategy, round targets, tiers, evidence-backed player callouts, print/mobile views, checklist, glossary, and source notes.   |
+| Capability                  | Status                 | Intended outcome                                                                                                                        |
+| --------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Public web shell            | Implemented            | A Next.js public demo using sample data only.                                                                                           |
+| Private workspace boundary  | Implemented            | GitHub OAuth, immutable account-ID allowlisting, server-side sessions, and protected workspace shell.                                   |
+| Canonical football domain   | Implemented            | Shared player, team, league, draft, ranking, projection, ADP, and provenance types.                                                     |
+| Scoring engine              | Implemented and tested | Deterministic, configurable scoring for common fantasy categories, bonuses, and defensive tiers.                                        |
+| Database foundation         | Implemented            | PostgreSQL schema for users, provenance, imports, league settings, statistics, projections, rankings, ADP, drafts, trades, and news.    |
+| Expert/ADP/private imports  | Implemented            | Authenticated CSV previews and confirmation, credential-gated expert APIs, and attributed versioned ADP snapshots.                      |
+| Projections                 | Implemented and tested | Versioned transparent position models, walk-forward backtests, configurable scoring, uncertainty, and validated persistence.            |
+| Rankings                    | Implemented and tested | League-aware Model, Expert, Hybrid, FLEX, replacement-value, scarcity, ADP-value, and reproducible tier outputs.                        |
+| Player intelligence         | Implemented and tested | Normalized player evaluations, directory filters, profile comparisons, historical charts, provenance, and freshness states.             |
+| League gateway              | Implemented and tested | Normalized Sleeper discovery/import, full manual and ESPN profiles, provider capabilities, and portable league JSON.                    |
+| Draft event engine          | Implemented and tested | Append-only events, Sleeper/manual/fixture sources, deterministic replay, persistence, board controls, and stale/interrupted status.    |
+| ESPN companion architecture | Designed and tested    | Disabled-by-default boundary, strict event/status contracts, threat model, synthetic fixtures, and implementation security gate.        |
+| Draft recommendations       | Implemented and tested | League-aware, explained strategies built on replayed draft state with interpretable availability forecasts.                             |
+| Multi-player trade engine   | Implemented and tested | Optimized before/after lineups, bench and replacement value, risk ranges, generic assumptions, and authorized private saves.            |
+| News intelligence           | Implemented and tested | Permission-gated feeds, deduplication, entity/category filters, fact/interpretation separation, freshness, persistence, and scheduling. |
+| Data-driven draft guide     | Implemented and tested | Versioned strategy, round targets, tiers, evidence-backed player callouts, print/mobile views, checklist, glossary, and source notes.   |
+| Release operations          | Implemented            | Vercel/Neon environments, CI and schedules, redacted structured logs, private data health, and recovery runbooks.                       |
 
 ## Design choices
 

@@ -86,6 +86,14 @@ export interface AdpRepository {
   listSnapshots(input: AdpSnapshotQuery): Promise<AdpSnapshotRecord[]>;
 }
 
+export interface WorkspaceRepository {
+  getOverview(context: AuthorizationContext): Promise<PrivateWorkspaceOverviewRecord>;
+  updatePreferences(
+    context: AuthorizationContext,
+    preferences: WorkspacePreferencesInput
+  ): Promise<WorkspacePreferencesRecord>;
+}
+
 /**
  * Persistence boundary for provenance and ingestion health. Provider adapters and
  * pipelines use this instead of depending on a particular database client.
@@ -238,6 +246,70 @@ export interface NewTradeEvaluationRecord {
   readonly sideA: unknown;
   readonly sideB: unknown;
   readonly result: unknown;
+}
+
+export interface WorkspacePreferencesInput {
+  readonly defaultLeagueId?: string;
+  readonly defaultScoringFormat: "standard" | "half-ppr" | "ppr";
+  readonly timezone: string;
+  readonly compactRankings: boolean;
+}
+
+export interface WorkspacePreferencesRecord extends WorkspacePreferencesInput {
+  readonly defaultLeagueId?: string;
+  readonly updatedAt: Date;
+}
+
+export interface PrivateWorkspaceOverviewRecord {
+  readonly leagues: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly teamCount: number;
+    readonly provider: string | null;
+    readonly externalLeagueId: string | null;
+  }[];
+  readonly scoringProfiles: readonly {
+    readonly id: string;
+    readonly leagueConfigurationId: string;
+    readonly leagueName: string;
+    readonly name: string;
+    readonly version: number;
+  }[];
+  readonly expertImports: readonly {
+    readonly id: string;
+    readonly fileName: string;
+    readonly providerName: string | null;
+    readonly status: string;
+    readonly createdAt: Date;
+  }[];
+  readonly rankings: readonly {
+    readonly id: string;
+    readonly kind: "model" | "expert" | "hybrid";
+    readonly version: string;
+    readonly generatedAt: Date;
+  }[];
+  readonly drafts: readonly {
+    readonly id: string;
+    readonly leagueName: string;
+    readonly provider: string | null;
+    readonly status: "scheduled" | "in_progress" | "paused" | "completed" | "cancelled";
+    readonly updatedAt: Date;
+    readonly queuedPlayerCount: number;
+  }[];
+  readonly tradeEvaluations: readonly {
+    readonly id: string;
+    readonly status: "draft" | "evaluated" | "archived";
+    readonly updatedAt: Date;
+  }[];
+  readonly dataRefreshes: readonly {
+    readonly id: string;
+    readonly sourceName: string;
+    readonly version: string;
+    readonly validationStatus: string;
+    readonly freshnessStatus: string;
+    readonly retrievedAt: Date;
+  }[];
+  readonly preferences: WorkspacePreferencesRecord;
 }
 
 export interface NewsRecord {

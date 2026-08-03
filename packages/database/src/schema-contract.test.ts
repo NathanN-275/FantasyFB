@@ -12,7 +12,8 @@ async function migrationSql() {
     "0003_organic_leo.sql",
     "0004_projection-engine-v1.sql",
     "0005_expert-imports-adp-snapshots.sql",
-    "0006_wise_loa.sql"
+    "0006_wise_loa.sql",
+    "0007_loud_miracleman.sql"
   ];
   return Promise.all(
     files.map((file) => readFile(fileURLToPath(new URL(file, migrationDirectory)), "utf8"))
@@ -39,6 +40,7 @@ describe("initial database migrations", () => {
       "player_rankings",
       "adp_snapshots",
       "league_configurations",
+      "workspace_preferences",
       "league_scoring_rules",
       "roster_configurations",
       "fantasy_teams",
@@ -69,6 +71,8 @@ describe("initial database migrations", () => {
     expect(sql).toContain("draft_events_draft_sequence_unique");
     expect(sql).toContain("draft_events_draft_idempotency_unique");
     expect(sql).toContain("auth_sessions_token_unique");
+    expect(sql).toContain("workspace_preferences_owner_user_id_user_accounts_id_fk");
+    expect(sql).toContain("workspace_preferences_default_league_id_league_configurations_id_fk");
     expect(sql).toContain("awaiting_confirmation");
     expect(sql).toContain("expert_import_rows_matched_player_required");
     expect(sql).toContain("adp_snapshots_provider_context_time_index");

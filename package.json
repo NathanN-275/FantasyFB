@@ -18,6 +18,7 @@
     "test": "pnpm -r test",
     "test:python": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest pipelines; else python3 -m pytest pipelines; fi",
     "test:e2e": "pnpm --filter @fantasyfb/web exec playwright test",
+    "fixtures:validate": "pnpm --filter @fantasyfb/web exec vitest run src/fixtures/public-demo.test.ts src/server/public-route-boundary.test.ts",
     "boundaries": "node scripts/validate-import-boundaries.mjs",
     "db:generate": "pnpm --filter @fantasyfb/database exec drizzle-kit generate",
     "db:migrate": "pnpm --filter @fantasyfb/database db:migrate",

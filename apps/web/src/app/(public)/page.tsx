@@ -8,11 +8,15 @@ export default function PublicHomePage() {
           FANTASY<span>FB</span>
         </Link>
         <div className="nav-links">
+          <Link href="/features">Features</Link>
+          <Link href="/league-demo">Sample league</Link>
+          <Link href="/rankings">Rankings</Link>
           <Link href="/players">Players</Link>
           <Link href="/news">News</Link>
           <Link href="/draft-guide">Draft guide</Link>
           <Link href="/draft-demo">Draft demo</Link>
           <Link href="/trade-demo">Trade analyzer</Link>
+          <Link href="/about">How it works</Link>
           <Link href="/sign-in">Private workspace</Link>
         </div>
       </nav>
@@ -26,6 +30,9 @@ export default function PublicHomePage() {
             every source behind the call.
           </p>
           <div className="hero-actions">
+            <Link className="button-link" href="/features">
+              Explore the public demo
+            </Link>
             <Link className="button-link" href="/players">
               Explore player research
             </Link>
@@ -78,6 +85,13 @@ export default function PublicHomePage() {
           </p>
         </article>
       </section>
+      <footer className="public-home-footer">
+        <p>PUBLIC DEMO · SYNTHETIC SAMPLE DATA ONLY</p>
+        <div>
+          <Link href="/about">Architecture, methodology, and data sources</Link>
+          <a href="https://github.com/NathanN-275/FantasyFB">GitHub repository</a>
+        </div>
+      </footer>
     </main>
   );
 }

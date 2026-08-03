@@ -191,10 +191,21 @@ export {
   createManualDraftEvent,
   createSleeperPollingSource,
   DraftSourceError,
-  normalizeEspnCompanionEvent,
-  type DraftSourceErrorCode,
-  type EspnCompanionDraftEventV1
+  type DraftSourceErrorCode
 } from "./sources.js";
+export {
+  ESPN_COMPANION_CONTRACT_VERSION,
+  ESPN_COMPANION_PICK_CONTRACT,
+  ESPN_COMPANION_STATUS_CONTRACT,
+  espnCompanionPickMessageSchema,
+  espnCompanionStatusMessageSchema,
+  evaluateEspnCompanionPickMessage,
+  type EspnCompanionAcceptancePolicy,
+  type EspnCompanionPickEvaluation,
+  type EspnCompanionPickMessageV1,
+  type EspnCompanionRejectionCode,
+  type EspnCompanionStatusMessageV1
+} from "./espn-companion.js";
 export {
   DRAFT_EVENT_TYPES,
   DRAFT_SOURCES,

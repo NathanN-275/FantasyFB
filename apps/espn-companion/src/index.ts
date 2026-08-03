@@ -1,5 +1,5 @@
 /**
- * Deliberately empty extension boundary. Prompt 18 will define its event contract and security
- * model before browser-observation code is introduced.
+ * Deliberately non-operational extension boundary. Architecture, security policy, and message
+ * contracts are complete; browser observation remains disabled pending a separate review.
  */
-export const companionStatus = "architecture-placeholder";
+export const companionStatus = "architecture-complete-observation-disabled";

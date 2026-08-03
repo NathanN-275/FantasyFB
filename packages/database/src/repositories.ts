@@ -20,6 +20,8 @@ import type {
   NewTradeEvaluationRecord,
   StatsRepository,
   TradeRepository,
+  WorkspacePreferencesInput,
+  WorkspaceRepository,
   VisiblePlayerQuery,
   VisibleNewsQuery,
   VisibleSeasonQuery
@@ -31,9 +33,11 @@ import {
   dataVisibility,
   datasetVersions,
   draftEvents,
+  draftQueues,
   drafts,
   expertImportRows,
   leagueConfigurations,
+  leagueScoringRules,
   newsRecords,
   nflTeams,
   playerExternalIds,
@@ -49,6 +53,7 @@ import {
   teamSeasonStatistics,
   teamWeeklyStatistics,
   tradeEvaluations,
+  workspacePreferences,
   weeklyStatistics
 } from "./schema.js";
 import type { Database } from "./types.js";
@@ -119,6 +124,7 @@ export function createRepositories(database: Database): {
   newsRepository: NewsRepository;
   importRepository: ImportRepository;
   adpRepository: AdpRepository;
+  workspaceRepository: WorkspaceRepository;
 } {
   const playerRepository: PlayerRepository = {
     async findById(playerId) {
@@ -1126,6 +1132,209 @@ export function createRepositories(database: Database): {
     }
   };
 
+  const workspaceRepository: WorkspaceRepository = {
+    async getOverview(context) {
+      const [
+        leagueRows,
+        scoringProfileRows,
+        importRows,
+        rankingRows,
+        draftRows,
+        queueRows,
+        tradeRows,
+        refreshRows,
+        preferenceRows
+      ] = await Promise.all([
+        database
+          .select({
+            id: leagueConfigurations.id,
+            name: leagueConfigurations.name,
+            teamCount: leagueConfigurations.teamCount,
+            provider: leagueConfigurations.provider,
+            externalLeagueId: leagueConfigurations.externalLeagueId
+          })
+          .from(leagueConfigurations)
+          .where(eq(leagueConfigurations.ownerUserId, context.userId))
+          .orderBy(asc(leagueConfigurations.name)),
+        database
+          .select({
+            id: leagueScoringRules.id,
+            leagueConfigurationId: leagueScoringRules.leagueConfigurationId,
+            leagueName: leagueConfigurations.name,
+            name: leagueScoringRules.name,
+            version: leagueScoringRules.version
+          })
+          .from(leagueScoringRules)
+          .innerJoin(
+            leagueConfigurations,
+            eq(leagueScoringRules.leagueConfigurationId, leagueConfigurations.id)
+          )
+          .where(eq(leagueConfigurations.ownerUserId, context.userId))
+          .orderBy(asc(leagueConfigurations.name), desc(leagueScoringRules.version)),
+        database
+          .select({
+            id: privateDataImports.id,
+            fileName: privateDataImports.fileName,
+            providerName: privateDataImports.providerName,
+            status: privateDataImports.status,
+            createdAt: privateDataImports.createdAt
+          })
+          .from(privateDataImports)
+          .where(eq(privateDataImports.ownerUserId, context.userId))
+          .orderBy(desc(privateDataImports.createdAt)),
+        database
+          .select({
+            id: rankingRuns.id,
+            kind: rankingRuns.rankingKind,
+            version: rankingRuns.version,
+            generatedAt: rankingRuns.generatedAt
+          })
+          .from(rankingRuns)
+          .where(
+            and(eq(rankingRuns.visibility, "private"), eq(rankingRuns.ownerUserId, context.userId))
+          )
+          .orderBy(desc(rankingRuns.generatedAt)),
+        database
+          .select({
+            id: drafts.id,
+            leagueName: leagueConfigurations.name,
+            provider: drafts.provider,
+            status: drafts.status,
+            updatedAt: drafts.updatedAt
+          })
+          .from(drafts)
+          .innerJoin(
+            leagueConfigurations,
+            eq(drafts.leagueConfigurationId, leagueConfigurations.id)
+          )
+          .where(eq(leagueConfigurations.ownerUserId, context.userId))
+          .orderBy(desc(drafts.updatedAt)),
+        database
+          .select({
+            draftId: draftQueues.draftId,
+            count: sql<number>`count(${draftQueues.id})`
+          })
+          .from(draftQueues)
+          .innerJoin(drafts, eq(draftQueues.draftId, drafts.id))
+          .innerJoin(
+            leagueConfigurations,
+            eq(drafts.leagueConfigurationId, leagueConfigurations.id)
+          )
+          .where(eq(leagueConfigurations.ownerUserId, context.userId))
+          .groupBy(draftQueues.draftId),
+        database
+          .select({
+            id: tradeEvaluations.id,
+            status: tradeEvaluations.status,
+            updatedAt: tradeEvaluations.updatedAt
+          })
+          .from(tradeEvaluations)
+          .where(eq(tradeEvaluations.ownerUserId, context.userId))
+          .orderBy(desc(tradeEvaluations.updatedAt)),
+        database
+          .select({
+            id: datasetVersions.id,
+            sourceName: dataSources.name,
+            version: datasetVersions.version,
+            validationStatus: datasetVersions.validationStatus,
+            freshnessStatus: datasetVersions.freshnessStatus,
+            retrievedAt: datasetVersions.retrievedAt
+          })
+          .from(datasetVersions)
+          .innerJoin(dataSources, eq(datasetVersions.dataSourceId, dataSources.id))
+          .where(
+            and(
+              eq(datasetVersions.visibility, "private"),
+              eq(datasetVersions.ownerUserId, context.userId)
+            )
+          )
+          .orderBy(desc(datasetVersions.retrievedAt)),
+        database
+          .select({
+            defaultLeagueId: workspacePreferences.defaultLeagueId,
+            defaultScoringFormat: workspacePreferences.defaultScoringFormat,
+            timezone: workspacePreferences.timezone,
+            compactRankings: workspacePreferences.compactRankings,
+            updatedAt: workspacePreferences.updatedAt
+          })
+          .from(workspacePreferences)
+          .where(eq(workspacePreferences.ownerUserId, context.userId))
+          .limit(1)
+      ]);
+
+      const queueCounts = new Map(queueRows.map((row) => [row.draftId, Number(row.count)]));
+      const preferences = preferenceRows[0];
+      return {
+        leagues: leagueRows,
+        scoringProfiles: scoringProfileRows,
+        expertImports: importRows,
+        rankings: rankingRows,
+        drafts: draftRows.map((draft) => ({
+          ...draft,
+          queuedPlayerCount: queueCounts.get(draft.id) ?? 0
+        })),
+        tradeEvaluations: tradeRows,
+        dataRefreshes: refreshRows,
+        preferences: preferences
+          ? {
+              ...(preferences.defaultLeagueId
+                ? { defaultLeagueId: preferences.defaultLeagueId }
+                : {}),
+              defaultScoringFormat: scoringFormat(preferences.defaultScoringFormat),
+              timezone: preferences.timezone,
+              compactRankings: preferences.compactRankings,
+              updatedAt: preferences.updatedAt
+            }
+          : {
+              defaultScoringFormat: "ppr",
+              timezone: "America/New_York",
+              compactRankings: false,
+              updatedAt: new Date(0)
+            }
+      };
+    },
+    async updatePreferences(context, preferences: WorkspacePreferencesInput) {
+      if (preferences.defaultLeagueId) {
+        await assertOwnedLeague(database, context, preferences.defaultLeagueId);
+      }
+      const [saved] = await database
+        .insert(workspacePreferences)
+        .values({
+          ownerUserId: context.userId,
+          defaultLeagueId: preferences.defaultLeagueId,
+          defaultScoringFormat: preferences.defaultScoringFormat,
+          timezone: preferences.timezone,
+          compactRankings: preferences.compactRankings,
+          updatedAt: new Date()
+        })
+        .onConflictDoUpdate({
+          target: workspacePreferences.ownerUserId,
+          set: {
+            defaultLeagueId: preferences.defaultLeagueId ?? null,
+            defaultScoringFormat: preferences.defaultScoringFormat,
+            timezone: preferences.timezone,
+            compactRankings: preferences.compactRankings,
+            updatedAt: new Date()
+          }
+        })
+        .returning({
+          defaultLeagueId: workspacePreferences.defaultLeagueId,
+          defaultScoringFormat: workspacePreferences.defaultScoringFormat,
+          timezone: workspacePreferences.timezone,
+          compactRankings: workspacePreferences.compactRankings,
+          updatedAt: workspacePreferences.updatedAt
+        });
+      if (!saved) throw new Error("Workspace preferences were not persisted.");
+      return {
+        ...(saved.defaultLeagueId ? { defaultLeagueId: saved.defaultLeagueId } : {}),
+        defaultScoringFormat: scoringFormat(saved.defaultScoringFormat),
+        timezone: saved.timezone,
+        compactRankings: saved.compactRankings,
+        updatedAt: saved.updatedAt
+      };
+    }
+  };
+
   return {
     playerRepository,
     statsRepository,
@@ -1137,8 +1346,14 @@ export function createRepositories(database: Database): {
     tradeRepository,
     newsRepository,
     importRepository,
-    adpRepository
+    adpRepository,
+    workspaceRepository
   };
+}
+
+function scoringFormat(value: string): WorkspacePreferencesInput["defaultScoringFormat"] {
+  if (value === "standard" || value === "half-ppr" || value === "ppr") return value;
+  throw new Error(`Unsupported saved scoring format: ${value}.`);
 }
 
 async function listNews(database: Database, query: VisibleNewsQuery): Promise<NewsRecord[]> {

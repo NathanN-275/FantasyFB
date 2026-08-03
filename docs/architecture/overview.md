@@ -60,6 +60,12 @@ normalized model. Provider failures and stale responses preserve the last replay
 React renders only reduced board, roster, and availability state. See the
 [Draft Event Engine architecture](./draft-event-engine.md).
 
+The optional ESPN browser companion is architecture-only and disabled. Its proposed content-script
+boundary, draft-scoped pairing, strict pick/status contracts, compatibility checks, uncertain-match
+confirmation, duplicate handling, and emergency disable controls are documented in the
+[ESPN Companion architecture](./espn-companion.md); no live page observation or extension
+distribution exists.
+
 The same package exposes a pure draft recommendation interface over that reduced state. Six
 independent strategies use rankings, roster need, tiers, replacement value, ADP, risk, bye weeks,
 and an interpretable expected-availability model without hiding the decision behind one score.

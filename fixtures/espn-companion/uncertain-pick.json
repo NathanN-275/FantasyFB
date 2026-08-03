@@ -1,0 +1,23 @@
+{
+  "contract": "fantasyfb.espn-companion.pick",
+  "contractVersion": 1,
+  "messageId": "fixture-draft-2026:pick:2:r1",
+  "companionVersion": "0.1.0",
+  "observerVersion": "espn-draft-v1",
+  "draftId": "fixture-draft-2026",
+  "observedAt": "2026-07-29T16:01:00.000Z",
+  "event": {
+    "eventType": "pick_recorded",
+    "providerEventId": "synthetic-espn-pick-2",
+    "overallPick": 2,
+    "round": 1,
+    "draftSlot": 2,
+    "fantasyTeamId": "espn-team:2",
+    "keeperStatus": "standard",
+    "player": {
+      "resolution": "uncertain",
+      "displayName": "Alex Example",
+      "candidateCanonicalPlayerIds": ["synthetic-player-201", "synthetic-player-202"]
+    }
+  }
+}

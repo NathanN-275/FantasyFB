@@ -1,10 +1,12 @@
 import type { AuthorizationContext, DraftEventRecord, DraftRepository } from "@fantasyfb/contracts";
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 import {
   createDraftRoom,
   createFixtureDraftSource,
   createSleeperPollingSource,
-  normalizeEspnCompanionEvent,
+  espnCompanionStatusMessageSchema,
+  evaluateEspnCompanionPickMessage,
   replayDraftEvents,
   type DraftEvent
 } from "./index.js";
@@ -311,24 +313,145 @@ describe("draft source adapters", () => {
     expect(stale).toMatchObject({ state: "stale", events: [] });
   });
 
-  it("defines a versioned future ESPN companion contract without scraping", () => {
+  it("accepts a compatible ESPN fixture through the shared normalized event contract", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("../../../fixtures/espn-companion/accepted-pick.json", import.meta.url),
+        "utf8"
+      )
+    );
+
     expect(
-      normalizeEspnCompanionEvent({
-        version: 1,
-        eventId: "espn-event-1",
-        draftId,
+      evaluateEspnCompanionPickMessage(fixture, {
+        enabled: true,
+        expectedDraftId: "fixture-draft-2026",
+        supportedObserverVersions: new Set(["espn-draft-v1"])
+      })
+    ).toEqual({
+      status: "accepted",
+      event: {
+        eventId: "fixture-draft-2026:pick:1:r1",
+        draftId: "fixture-draft-2026",
+        source: "espn_companion",
         eventType: "pick_recorded",
+        providerEventId: "synthetic-espn-pick-1",
+        providerTimestamp: "2026-07-29T16:00:00.000Z",
         overallPick: 1,
         round: 1,
         draftSlot: 1,
-        fantasyTeamId: "team-1",
-        playerExternalId: "espn-player-1",
-        keeperStatus: "standard",
-        occurredAt: receivedAt
-      })
-    ).toMatchObject({
-      source: "espn_companion",
-      providerTimestamp: receivedAt
+        fantasyTeamId: "espn-team:1",
+        playerExternalId: "synthetic-espn-player-101",
+        keeperStatus: "standard"
+      }
     });
+  });
+
+  it("requires confirmation for uncertain players and never silently emits a pick", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("../../../fixtures/espn-companion/uncertain-pick.json", import.meta.url),
+        "utf8"
+      )
+    );
+
+    expect(
+      evaluateEspnCompanionPickMessage(fixture, {
+        enabled: true,
+        expectedDraftId: "fixture-draft-2026",
+        supportedObserverVersions: new Set(["espn-draft-v1"])
+      })
+    ).toEqual({
+      status: "confirmation_required",
+      messageId: "fixture-draft-2026:pick:2:r1",
+      displayName: "Alex Example",
+      candidateCanonicalPlayerIds: ["synthetic-player-201", "synthetic-player-202"]
+    });
+  });
+
+  it("rejects disabled, incompatible, cross-draft, malformed, and duplicate messages", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("../../../fixtures/espn-companion/accepted-pick.json", import.meta.url),
+        "utf8"
+      )
+    );
+    const policy = {
+      enabled: true,
+      expectedDraftId: "fixture-draft-2026",
+      supportedObserverVersions: new Set(["espn-draft-v1"])
+    };
+
+    expect(evaluateEspnCompanionPickMessage(fixture, { ...policy, enabled: false })).toMatchObject({
+      status: "rejected",
+      code: "disabled"
+    });
+    expect(
+      evaluateEspnCompanionPickMessage({ ...fixture, contractVersion: 2 }, policy)
+    ).toMatchObject({ status: "rejected", code: "incompatible_contract" });
+    expect(
+      evaluateEspnCompanionPickMessage({ ...fixture, observerVersion: "unknown-page-v9" }, policy)
+    ).toMatchObject({ status: "rejected", code: "incompatible_observer" });
+    expect(
+      evaluateEspnCompanionPickMessage({ ...fixture, draftId: "another-draft" }, policy)
+    ).toMatchObject({ status: "rejected", code: "draft_mismatch" });
+    expect(
+      evaluateEspnCompanionPickMessage(
+        { ...fixture, unrelatedPageHtml: "<main>must not be accepted</main>" },
+        policy
+      )
+    ).toMatchObject({ status: "rejected", code: "invalid_message" });
+    expect(
+      evaluateEspnCompanionPickMessage(fixture, {
+        ...policy,
+        seenMessageIds: new Set([fixture.messageId])
+      })
+    ).toEqual({ status: "duplicate", messageId: fixture.messageId });
+  });
+
+  it("validates a fixed-vocabulary unsupported status without accepting page content", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("../../../fixtures/espn-companion/unsupported-status.json", import.meta.url),
+        "utf8"
+      )
+    );
+
+    expect(espnCompanionStatusMessageSchema.parse(fixture)).toMatchObject({
+      state: "unsupported",
+      reason: "page_signature_unknown"
+    });
+    expect(
+      espnCompanionStatusMessageSchema.safeParse({ ...fixture, pageHtml: "<main>private</main>" })
+        .success
+    ).toBe(false);
+  });
+
+  it("records a restricted proposed permission surface with sensitive APIs prohibited", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL("../../../fixtures/espn-companion/permissions.json", import.meta.url),
+        "utf8"
+      )
+    ) as {
+      synthetic: boolean;
+      permissions: string[];
+      hostPermissions: string[];
+      contentScriptMatches: string[];
+      prohibitedPermissions: string[];
+    };
+
+    expect(fixture).toMatchObject({
+      synthetic: true,
+      permissions: ["storage"],
+      hostPermissions: [
+        "https://fantasy.espn.com/*",
+        "https://fantasyfb.example.invalid/api/private/companion/*"
+      ],
+      contentScriptMatches: ["https://fantasy.espn.com/football/draft*"]
+    });
+    expect(fixture.permissions).not.toContain("<all_urls>");
+    expect(
+      fixture.prohibitedPermissions.filter((permission) => fixture.permissions.includes(permission))
+    ).toEqual([]);
   });
 });

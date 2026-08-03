@@ -604,6 +604,20 @@ export const leagueConfigurations = pgTable(
   ]
 );
 
+export const workspacePreferences = pgTable("workspace_preferences", {
+  ownerUserId: uuid("owner_user_id")
+    .primaryKey()
+    .references(() => userAccounts.id, { onDelete: "cascade" }),
+  defaultLeagueId: uuid("default_league_id").references(() => leagueConfigurations.id, {
+    onDelete: "set null"
+  }),
+  defaultScoringFormat: text("default_scoring_format").notNull().default("ppr"),
+  timezone: text("timezone").notNull().default("America/New_York"),
+  compactRankings: boolean("compact_rankings").notNull().default(false),
+  createdAt,
+  updatedAt
+});
+
 export const leagueScoringRules = pgTable(
   "league_scoring_rules",
   {

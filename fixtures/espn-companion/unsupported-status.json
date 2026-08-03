@@ -1,0 +1,11 @@
+{
+  "contract": "fantasyfb.espn-companion.status",
+  "contractVersion": 1,
+  "messageId": "fixture-status-unsupported-1",
+  "companionVersion": "0.1.0",
+  "observerVersion": "espn-draft-v1",
+  "draftId": "fixture-draft-2026",
+  "occurredAt": "2026-07-29T16:02:00.000Z",
+  "state": "unsupported",
+  "reason": "page_signature_unknown"
+}

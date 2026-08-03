@@ -70,6 +70,14 @@ describe("migration execution", () => {
       sql`insert into league_configurations (id, owner_user_id, name, team_count) values (${leagueId}, ${userId}, 'Test League', 10)`
     );
     await database.execute(
+      sql`insert into workspace_preferences (owner_user_id, default_league_id) values (${userId}, ${leagueId})`
+    );
+    await expect(
+      database.execute(
+        sql`insert into workspace_preferences (owner_user_id, default_league_id) values (${otherUserId}, ${randomUUID()})`
+      )
+    ).rejects.toThrow();
+    await database.execute(
       sql`insert into drafts (id, league_configuration_id) values (${draftId}, ${leagueId})`
     );
     await database.execute(
