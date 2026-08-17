@@ -147,6 +147,20 @@ export const authSessions = pgTable(
   ]
 );
 
+/** Short-lived OAuth state and verification values required by Better Auth. */
+export const authVerificationValues = pgTable(
+  "auth_verification_values",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt,
+    updatedAt
+  },
+  (table) => [index("auth_verification_values_identifier_index").on(table.identifier)]
+);
+
 export const nflTeams = pgTable(
   "nfl_teams",
   {

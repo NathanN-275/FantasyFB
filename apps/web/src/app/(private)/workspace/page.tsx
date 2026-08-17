@@ -1,9 +1,6 @@
 import { SignOutButton } from "../../../components/auth-buttons";
 import { ExpertImportPanel } from "../../../components/expert-import-panel";
-import { DraftRoomPanel } from "../../../components/draft-room-panel";
 import { LeagueGatewayPanel } from "../../../components/league-gateway-panel";
-import { TradeAnalyzerPanel } from "../../../components/trade-analyzer-panel";
-import { TRADE_DEMO_INPUT } from "../../../fixtures/trade-evaluation";
 import { requireAuthorizedUser } from "../../../server/auth/private-access";
 import { getExpertDataStatus } from "../../../server/expert-data";
 import { getPrivateWorkspaceOverview } from "../../../server/private-workspace";
@@ -215,12 +212,15 @@ export default async function WorkspacePage() {
       </section>
 
       <LeagueGatewayPanel defaultSeason={currentSeason} />
-      <DraftRoomPanel />
-      <TradeAnalyzerPanel
-        input={TRADE_DEMO_INPUT}
-        allowSave
-        fixtureLabel="Synthetic workflow fixture - saved evaluations remain private"
-      />
+      <section className="workspace-section" aria-labelledby="decision-data-heading">
+        <p className="section-kicker">Real-data readiness</p>
+        <h2 id="decision-data-heading">Decision tools</h2>
+        <p className="workspace-empty">
+          Draft recommendations and trade analysis are unavailable until a real league, canonical
+          player catalog, projections, and rankings are available. Synthetic demo players are not
+          shown in the private workspace.
+        </p>
+      </section>
       <ExpertImportPanel expertStatus={expertStatus} defaultSeason={currentSeason} />
       <SignOutButton />
     </main>

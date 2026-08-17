@@ -2,6 +2,7 @@ import "server-only";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import {
   authSessions,
+  authVerificationValues,
   authorizedUserIdentities,
   createDatabase,
   findProviderAccountId,
@@ -23,6 +24,13 @@ import {
 } from "../env";
 
 const githubProvider = "github";
+
+export const betterAuthDatabaseSchema = {
+  user: userAccounts,
+  account: authorizedUserIdentities,
+  session: authSessions,
+  verification: authVerificationValues
+};
 
 interface SessionUser {
   id: string;
@@ -83,11 +91,7 @@ function createBetterAuth() {
     secret: authenticationEnvironment.AUTH_SECRET,
     database: drizzleAdapter(database, {
       provider: "pg",
-      schema: {
-        user: userAccounts,
-        account: authorizedUserIdentities,
-        session: authSessions
-      }
+      schema: betterAuthDatabaseSchema
     }),
     socialProviders: {
       github: {

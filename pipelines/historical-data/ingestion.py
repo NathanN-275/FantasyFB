@@ -398,8 +398,20 @@ class JsonHistoricalDataRepository:
 class PostgresHistoricalDataRepository:
     """PostgreSQL adapter for the existing data-source, provenance, and stats tables."""
 
-    def __init__(self, database_url: str) -> None:
+    def __init__(
+        self,
+        database_url: str,
+        *,
+        visibility: str = "public",
+        owner_user_id: str | None = None,
+    ) -> None:
         self._database_url = database_url
+        if visibility not in {"public", "private"}:
+            raise ValueError("Historical datasets must be public or private.")
+        if visibility == "private" and not owner_user_id:
+            raise ValueError("Private historical datasets require an owner user ID.")
+        self._visibility = visibility
+        self._owner_user_id = owner_user_id
 
     def store_success(
         self,
@@ -423,8 +435,13 @@ class PostgresHistoricalDataRepository:
 
         with psycopg.connect(self._database_url) as connection:
             with connection.cursor() as cursor:
+                conflict_clause = (
+                    "ON CONFLICT (data_source_id, version) WHERE owner_user_id IS NULL DO UPDATE"
+                    if self._visibility == "public"
+                    else "ON CONFLICT (data_source_id, version, owner_user_id) DO UPDATE"
+                )
                 cursor.execute(
-                    """
+                    f"""
                     INSERT INTO data_sources (name, source_identifier, source_url, license_or_usage_note)
                     VALUES (%s, %s, %s, %s)
                     ON CONFLICT (name, source_identifier) DO UPDATE
@@ -446,9 +463,9 @@ class PostgresHistoricalDataRepository:
                     """
                     INSERT INTO dataset_versions
                         (id, data_source_id, visibility, version, season_year, retrieved_at, effective_at,
-                         validation_status, freshness_status, record_count, license_or_usage_note)
-                    VALUES (%s, %s, 'public', %s, %s, %s, %s, 'valid', 'valid', %s, %s)
-                    ON CONFLICT (data_source_id, version) WHERE owner_user_id IS NULL DO UPDATE
+                         validation_status, freshness_status, record_count, license_or_usage_note, owner_user_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'valid', 'valid', %s, %s, %s)
+                    {conflict_clause}
                     SET retrieved_at = EXCLUDED.retrieved_at,
                         effective_at = EXCLUDED.effective_at,
                         validation_status = EXCLUDED.validation_status,
@@ -466,6 +483,7 @@ class PostgresHistoricalDataRepository:
                         dataset.effective_at,
                         dataset.record_count,
                         dataset.license_or_usage_note,
+                        self._owner_user_id,
                     ),
                 )
                 dataset_version_id = cursor.fetchone()[0]

@@ -25,13 +25,32 @@ def main() -> int:
         type=Path,
         help="Development-only JSON repository. Do not use for scheduled production ingestion.",
     )
+    parser.add_argument(
+        "--visibility",
+        choices=("public", "private"),
+        default=os.environ.get("DATA_VISIBILITY", "public"),
+        help="Visibility for the persisted dataset. Private datasets require --owner-user-id.",
+    )
+    parser.add_argument(
+        "--owner-user-id",
+        default=os.environ.get("OWNER_USER_ID"),
+        help="Authenticated FantasyFB user UUID required for private datasets.",
+    )
     args = parser.parse_args()
     database_url = os.environ.get("DATABASE_URL")
     if bool(database_url) == bool(args.state_file):
         parser.error("Set exactly one of DATABASE_URL or --state-file.")
+    if args.visibility == "private" and not args.owner_user_id:
+        parser.error("Private ingestion requires --owner-user-id.")
+    if args.state_file and args.visibility == "private":
+        parser.error("Private visibility is only supported by the PostgreSQL repository.")
 
     repository = (
-        PostgresHistoricalDataRepository(database_url)
+        PostgresHistoricalDataRepository(
+            database_url,
+            visibility=args.visibility,
+            owner_user_id=args.owner_user_id,
+        )
         if database_url
         else JsonHistoricalDataRepository(args.state_file)
     )

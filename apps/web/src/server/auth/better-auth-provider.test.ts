@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { BetterAuthProvider } from "./better-auth";
+import { BetterAuthProvider, betterAuthDatabaseSchema } from "./better-auth";
+
+describe("Better Auth database schema", () => {
+  it("provides every core model needed to start an OAuth sign-in", () => {
+    expect(Object.keys(betterAuthDatabaseSchema).sort()).toEqual([
+      "account",
+      "session",
+      "user",
+      "verification"
+    ]);
+  });
+});
 
 describe("Better Auth provider authorization", () => {
   it("permits an authenticated GitHub account whose immutable ID is allowlisted", async () => {
