@@ -12,7 +12,7 @@
     "@fantasyfb/database": "workspace:*",
     "@fantasyfb/expert-data": "workspace:*",
     "@fantasyfb/observability": "workspace:*",
-    "zod": "^3.24.3"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "tsx": "^4.19.3"
