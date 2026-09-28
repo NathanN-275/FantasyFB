@@ -30,14 +30,14 @@
     "news:ingest": "pnpm --filter @fantasyfb/news-pipeline ingest"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.24.0",
-    "@playwright/test": "^1.52.0",
-    "@types/node": "^22.15.3",
-    "eslint": "^9.24.0",
-    "eslint-config-next": "^15.3.0",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.29.0"
+    "@eslint/eslintrc": "^3.3.7",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.2",
+    "eslint": "^10.11.0",
+    "eslint-config-next": "^16.3.6",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.70.1"
   }
 }
